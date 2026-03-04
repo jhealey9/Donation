@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Donation Form</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --df-primary: #1a56a0;
+      --df-primary-dark: #144080;
+      --df-primary-light: #e8f0fb;
+      --df-monthly-accent: #e8a020;
+      --df-monthly-accent-light: #fef3dc;
+      --df-success: #16a34a;
+      --df-error: #dc2626;
+      --df-text: #111827;
+      --df-text-muted: #6b7280;
+      --df-border: #e5e7eb;
+      --df-bg: #ffffff;
+      --df-surface: #f9fafb;
+      --df-radius: 10px;
+      --df-radius-sm: 6px;
+      --df-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --df-shadow: 0 4px 32px rgba(0,0,0,0.09);
+    }
+
+    body {
+      font-family: var(--df-font);
+      background: var(--df-surface);
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 32px 16px;
+    }
+
+    .df-card {
+      background: var(--df-bg);
+      border-radius: var(--df-radius);
+      box-shadow: var(--df-shadow);
+      padding: 40px;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    /* Progress */
+    .df-progress { display: flex; margin-bottom: 32px; }
+    .df-progress-step { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; position: relative; color: var(--df-text-muted); font-size: 10px; font-weight: 500; }
+    .df-progress-step:not(:first-child)::before { content: ''; position: absolute; top: 13px; right: calc(50% + 14px); left: calc(-50% + 14px); height: 2px; background: var(--df-border); }
+    .df-progress-step.completed::before, .df-progress-step.active::before { background: var(--df-primary-light); }
+    .df-progress-dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--df-border); background: var(--df-bg); color: var(--df-text-muted); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; z-index: 1; }
+    .df-progress-step.active .df-progress-dot { border-color: var(--df-primary); background: var(--df-primary); color: #fff; }
+    .df-progress-step.completed .df-progress-dot { border-color: var(--df-primary); background: var(--df-primary-light); color: var(--df-primary); }
+    .df-progress-step.active .df-progress-label { color: var(--df-primary); font-weight: 600; }
+
+    /* Typography */
+    .df-step-heading { font-size: 22px; font-weight: 700; color: var(--df-text); margin-bottom: 24px; outline: none; }
+    .df-step-subtitle { font-size: 14px; color: var(--df-text-muted); margin-top: -16px; margin-bottom: 20px; line-height: 1.5; }
+
+    /* Fields */
+    .df-field-group { margin-bottom: 20px; }
+    .df-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .df-field-label { display: block; font-size: 13px; font-weight: 600; color: var(--df-text); margin-bottom: 8px; }
+    .df-optional { font-weight: 400; color: var(--df-text-muted); }
+    .df-text-input, .df-select {
+      width: 100%; padding: 12px 14px; border: 1px solid var(--df-border);
+      border-radius: var(--df-radius-sm); font-family: var(--df-font);
+      font-size: 15px; color: var(--df-text); background: var(--df-bg);
+      outline: none; transition: border-color 0.18s;
+    }
+    .df-text-input:focus, .df-select:focus { border-color: var(--df-primary); }
+    .df-input-error { border-color: var(--df-error) !important; }
+    .df-error-msg { display: block; margin-top: 6px; font-size: 12px; color: var(--df-error); font-weight: 500; }
+
+    /* Frequency toggle */
+    .df-frequency-toggle { display: flex; border-radius: var(--df-radius-sm); overflow: hidden; border: 2px solid var(--df-border); }
+    .df-toggle-btn { flex: 1; padding: 11px 8px; border: none; background: transparent; font-family: var(--df-font); font-size: 14px; font-weight: 600; color: var(--df-text-muted); cursor: pointer; }
+    .df-toggle-monthly.active { background: var(--df-monthly-accent); color: #fff; }
+    .df-toggle-onetime.active { background: var(--df-primary); color: #fff; }
+    .df-frequency-hint { margin-top: 8px; font-size: 12px; color: var(--df-monthly-accent); font-weight: 500; }
+
+    /* Preset amounts */
+    .df-preset-amounts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+    .df-amount-btn { padding: 13px 6px; border: 2px solid var(--df-border); border-radius: var(--df-radius-sm); background: transparent; font-family: var(--df-font); font-size: 15px; font-weight: 700; color: var(--df-text); cursor: pointer; transition: all 0.18s; }
+    .df-amount-btn:hover { border-color: var(--df-primary); color: var(--df-primary); }
+    .df-amount-btn.active { border-color: var(--df-primary); background: var(--df-primary-light); color: var(--df-primary); }
+
+    /* Custom amount */
+    .df-custom-amount-wrapper { display: flex; align-items: center; border: 1px solid var(--df-border); border-radius: var(--df-radius-sm); overflow: hidden; }
+    .df-custom-amount-wrapper:focus-within { border-color: var(--df-primary); }
+    .df-custom-amount-wrapper.error { border-color: var(--df-error); }
+    .df-currency-symbol { padding: 0 14px; font-size: 15px; font-weight: 600; color: var(--df-text-muted); background: var(--df-surface); border-right: 1px solid var(--df-border); align-self: stretch; display: flex; align-items: center; }
+    .df-custom-amount-input { flex: 1; padding: 12px 14px; border: none; outline: none; font-family: var(--df-font); font-size: 15px; color: var(--df-text); background: transparent; }
+    .df-custom-amount-input::-webkit-outer-spin-button, .df-custom-amount-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+    /* Impact line */
+    .df-impact-line { padding: 12px 16px; background: var(--df-primary-light); border-left: 3px solid var(--df-primary); border-radius: 0 var(--df-radius-sm) var(--df-radius-sm) 0; font-size: 13px; color: var(--df-text); line-height: 1.5; margin-bottom: 16px; }
+
+    /* Buttons */
+    .df-btn { display: inline-flex; align-items: center; justify-content: center; padding: 14px 24px; border: none; border-radius: var(--df-radius-sm); font-family: var(--df-font); font-size: 15px; font-weight: 700; cursor: pointer; transition: background 0.18s; text-decoration: none; line-height: 1; width: 100%; }
+    .df-btn-primary { background: var(--df-primary); color: #fff; }
+    .df-btn-primary:hover { background: var(--df-primary-dark); }
+    .df-btn-secondary { background: var(--df-surface); color: var(--df-text); border: 1px solid var(--df-border); margin-top: 12px; }
+    .df-btn-ghost { background: transparent; color: var(--df-text-muted); font-size: 13px; font-weight: 500; text-decoration: underline; margin-top: 8px; }
+    .df-btn-back { background: transparent; color: var(--df-text-muted); font-size: 14px; font-weight: 600; padding: 14px 0; border: none; width: auto; }
+    .df-step-actions { display: flex; align-items: center; gap: 16px; margin-top: 4px; }
+    .df-step-actions .df-btn-primary { flex: 1; }
+
+    /* Dedication */
+    .df-dedication-types { display: flex; gap: 10px; margin-bottom: 20px; }
+    .df-dedication-btn { flex: 1; padding: 12px; border: 2px solid var(--df-border); border-radius: var(--df-radius-sm); background: transparent; font-family: var(--df-font); font-size: 13px; font-weight: 600; color: var(--df-text-muted); cursor: pointer; }
+    .df-dedication-btn.active { border-color: var(--df-primary); background: var(--df-primary-light); color: var(--df-primary); }
+    .df-fieldset { border: none; padding: 0; margin: 0; }
+    .df-radio-group { display: flex; gap: 20px; flex-wrap: wrap; }
+    .df-radio-label { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--df-text); cursor: pointer; }
+
+    /* Upsell */
+    .df-upsell { text-align: center; }
+    .df-upsell__icon { font-size: 36px; margin-bottom: 8px; }
+    .df-upsell__message { font-size: 14px; color: var(--df-text-muted); line-height: 1.6; margin-bottom: 24px; }
+    .df-upsell__comparison { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 28px; }
+    .df-upsell__amount-box { flex: 1; padding: 16px; border: 2px solid var(--df-border); border-radius: var(--df-radius-sm); text-align: center; }
+    .df-upsell__amount-box--monthly { border-color: var(--df-monthly-accent); background: var(--df-monthly-accent-light); }
+    .df-upsell__box-label { display: block; font-size: 11px; font-weight: 600; color: var(--df-text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+    .df-upsell__box-value { display: block; font-size: 24px; font-weight: 800; color: var(--df-text); }
+    .df-upsell__amount-box--monthly .df-upsell__box-value { color: var(--df-monthly-accent); }
+    .df-upsell__freq { font-size: 14px; font-weight: 500; color: var(--df-text-muted); }
+    .df-upsell__arrow { font-size: 20px; color: var(--df-text-muted); flex-shrink: 0; }
+    .df-upsell .df-btn { margin-bottom: 10px; }
+
+    /* Payment */
+    .df-payment-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; }
+    .df-payment-tab { padding: 8px 14px; border: 1px solid var(--df-border); border-radius: 99px; background: transparent; font-family: var(--df-font); font-size: 13px; font-weight: 600; color: var(--df-text-muted); cursor: pointer; }
+    .df-payment-tab.active { border-color: var(--df-primary); background: var(--df-primary-light); color: var(--df-primary); }
+    .df-payment-panel { margin-bottom: 20px; }
+    .df-payment-note { font-size: 13px; color: var(--df-text-muted); margin-bottom: 14px; line-height: 1.5; }
+    .df-flex-microform-placeholder { border: 1px solid var(--df-border); border-radius: var(--df-radius-sm); overflow: hidden; }
+    .df-flex-microform-field { padding: 14px 16px; background: var(--df-surface); font-size: 13px; color: var(--df-text-muted); border-bottom: 1px solid var(--df-border); display: flex; justify-content: space-between; }
+    .df-flex-microform-row { display: grid; grid-template-columns: 1fr 1fr; }
+    .df-flex-microform-row .df-flex-microform-field { border-bottom: none; }
+    .df-flex-microform-row .df-flex-microform-field:first-child { border-right: 1px solid var(--df-border); }
+    .df-wallet-container, .df-paypal-container { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 20px; background: var(--df-surface); border-radius: var(--df-radius-sm); }
+    .df-btn-paypal { background: #ffc439; color: #003087; }
+    .df-btn-apple-pay { background: #000; color: #fff; }
+    .df-btn-google-pay { background: #fff; color: #3c4043; border: 1px solid var(--df-border) !important; }
+    .df-ach-fields { padding: 16px; background: var(--df-surface); border-radius: var(--df-radius-sm); }
+    .df-trust-bar { display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; padding: 10px 0; margin-bottom: 20px; border-top: 1px solid var(--df-border); border-bottom: 1px solid var(--df-border); }
+    .df-trust-item { font-size: 12px; font-weight: 500; color: var(--df-text-muted); white-space: nowrap; }
+
+    /* Review */
+    .df-review-card { border: 1px solid var(--df-border); border-radius: var(--df-radius-sm); overflow: hidden; margin-bottom: 20px; }
+    .df-review-row { display: flex; align-items: center; padding: 14px 16px; gap: 12px; border-bottom: 1px solid var(--df-border); }
+    .df-review-row:last-child { border-bottom: none; }
+    .df-review-row__label { flex: 0 0 96px; font-size: 12px; font-weight: 600; color: var(--df-text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .df-review-row__value { flex: 1; font-size: 14px; font-weight: 600; color: var(--df-text); }
+    .df-review-edit { flex-shrink: 0; background: none; border: none; font-family: var(--df-font); font-size: 12px; font-weight: 600; color: var(--df-primary); cursor: pointer; padding: 4px 8px; border-radius: var(--df-radius-sm); }
+    .df-review-edit:hover { background: var(--df-primary-light); }
+    .df-legal { font-size: 11px; color: var(--df-text-muted); line-height: 1.6; margin-bottom: 20px; }
+
+    /* Confirmation */
+    .df-confirmation { text-align: center; }
+    .df-confirmation__icon { width: 68px; height: 68px; background: var(--df-success); color: #fff; border-radius: 50%; font-size: 32px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
+    .df-confirmation__message { font-size: 15px; color: var(--df-text-muted); margin-bottom: 24px; line-height: 1.6; }
+    .df-confirmation__summary { background: var(--df-surface); border-radius: var(--df-radius-sm); border: 1px solid var(--df-border); overflow: hidden; margin-bottom: 20px; text-align: left; }
+    .df-confirmation__row { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--df-border); font-size: 14px; }
+    .df-confirmation__row:last-child { border-bottom: none; }
+    .df-confirmation__row span { color: var(--df-text-muted); }
+    .df-confirmation__recurring-note { font-size: 13px; color: var(--df-text-muted); line-height: 1.6; margin-bottom: 16px; padding: 12px 16px; background: var(--df-primary-light); border-radius: var(--df-radius-sm); text-align: left; }
+    .df-confirmation__honoree { font-size: 14px; color: var(--df-text-muted); margin-bottom: 16px; font-style: italic; }
+
+    @media (max-width: 540px) {
+      .df-card { padding: 28px 20px; }
+      .df-preset-amounts { grid-template-columns: repeat(2, 1fr); }
+      .df-field-row { grid-template-columns: 1fr; }
+      .df-progress-label { display: none; }
+      .df-upsell__comparison { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    // ── Config ───────────────────────────────────────────────────────────────
+    const config = {
+      defaultFrequency: 'monthly',
+      defaultAmount: 50,
+      presetAmounts: [25, 50, 100, 250],
+      impactLines: {
+        25: 'provides clean water for a family for 1 month',
+        50: 'feeds 12 families for a month',
+        100: "supports a child's education for a semester",
+        250: 'funds a community health worker for 1 month',
+      },
+      funds: [],
+      ctaStep1: 'Give Now',
+      premiumOffer: null,
+      upsellEnabled: true,
+      upsellHeadline: 'Make your gift go further',
+      upsellMessage: 'Monthly donors provide reliable support that helps us plan ahead and serve more people. Will you consider making your gift recurring?',
+      upsellCTA: 'Yes, make it monthly',
+      upsellDecline: 'No thanks, keep my one-time gift',
+      ctaReview: 'Complete My Gift',
+      legalDisclosure: 'Your donation is tax-deductible to the extent permitted by law. No goods or services were provided in exchange for this contribution.',
+      confirmationHeadline: 'Thank you for your generosity!',
+      confirmationMessage: 'Your gift is making a real difference in the lives of those we serve.',
+      confirmationCTA: null,
+    };
+
+    const STEPS = { GIVING: 0, PERSONAL: 1, HONOR: 2, UPSELL: 3, PAYMENT: 4, REVIEW: 5, CONFIRMATION: 6 };
+    const PROGRESS_LABELS = ['Gift Details', 'Your Info', 'Dedication', 'Payment', 'Review'];
+    const STEP_TO_PROGRESS = { 0: 0, 1: 1, 2: 2, 3: 3, 4: 3, 5: 4, 6: -1 };
+    const PAYMENT_LABELS = { card: 'Credit / Debit Card', paypal: 'PayPal', 'apple-pay': 'Apple Pay', 'google-pay': 'Google Pay', ach: 'Bank Transfer (ACH)' };
+
+    // ── Step 1: Giving Setup ─────────────────────────────────────────────────
+    function StepGiving({ formData, update, onNext, headingRef }) {
+      const [errors, setErrors] = useState({});
+      const selectedPreset = formData.customAmount ? null : formData.amount;
+      const impactLine = selectedPreset && config.impactLines[selectedPreset];
+      const effectiveAmount = formData.customAmount ? parseFloat(formData.customAmount) || 0 : formData.amount || 0;
+
+      function submit() {
+        if (!effectiveAmount || effectiveAmount <= 0) { setErrors({ amount: 'Please select or enter a donation amount.' }); return; }
+        setErrors({});
+        onNext();
+      }
+
+      return (
+        <section>
+          <h2 ref={headingRef} tabIndex={-1} className="df-step-heading">Choose your gift</h2>
+
+          <div className="df-field-group">
+            <div className="df-frequency-toggle" role="group" aria-label="Giving frequency">
+              <button type="button" className={`df-toggle-btn df-toggle-monthly ${formData.frequency === 'monthly' ? 'active' : ''}`} onClick={() => update({ frequency: 'monthly' })}>Monthly</button>
+              <button type="button" className={`df-toggle-btn df-toggle-onetime ${formData.frequency === 'one-time' ? 'active' : ''}`} onClick={() => update({ frequency: 'one-time' })}>One-Time</button>
+            </div>
+            {formData.frequency === 'monthly' && <p className="df-frequency-hint">Join thousands of monthly donors making a lasting impact.</p>}
+          </div>
+
+          <div className="df-field-group">
+            <label className="df-field-label">Donation Amount</label>
+            <div className="df-preset-amounts">
+              {config.presetAmounts.map(amt => (
+                <button key={amt} type="button" className={`df-amount-btn ${selectedPreset === amt ? 'active' : ''}`} onClick={() => { update({ amount: amt, customAmount: '' }); setErrors({}); }}>${amt}</button>
+              ))}
+            </div>
+            <div className={`df-custom-amount-wrapper ${errors.amount ? 'error' : ''}`}>
+              <span className="df-currency-symbol">$</span>
+              <input type="number" className="df-custom-amount-input" placeholder="Other amount" value={formData.customAmount} min="1"
+                onChange={e => { update({ amount: null, customAmount: e.target.value }); setErrors({}); }} aria-label="Custom donation amount" />
+            </div>
+            {errors.amount && <span className="df-error-msg" role="alert">{errors.amount}</span>}
+          </div>
+
+          {impactLine && (
+            <div className="df-impact-line">
+              Your gift of <strong>${selectedPreset}{formData.frequency === 'monthly' ? '/mo' : ''}</strong> {impactLine}.
+            </div>
+          )}
+
+          {config.funds && config.funds.length > 1 && (
+            <div className="df-field-group">
+              <label className="df-field-label" htmlFor="fund-select">Designate your gift</label>
+              <select id="fund-select" className="df-select" value={formData.fund} onChange={e => update({ fund: e.target.value })}>
+                {config.funds.map(f => <option key={f.code} value={f.code}>{f.label}</option>)}
+              </select>
+            </div>
+          )}
+
+          <button type="button" className="df-btn df-btn-primary" onClick={submit}>
+            {config.ctaStep1}{effectiveAmount > 0 ? ` — $${effectiveAmount.toFixed(0)}` : ''}{formData.frequency === 'monthly' && effectiveAmount > 0 ? '/mo' : ''}
+          </button>
+        </section>
+      );
+    }
+
+    // ── Step 2: Personal Info ────────────────────────────────────────────────
+    function StepPersonal({ formData, update, onNext, onBack, headingRef }) {
+      const [errors, setErrors] = useState({});
+
+      function submit() {
+        const errs = {};
+        if (!formData.firstName.trim()) errs.firstName = 'First name is required.';
+        if (!formData.lastName.trim()) errs.lastName = 'Last name is required.';
+        if (!formData.email.trim()) errs.email = 'Email is required.';
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) errs.email = 'Enter a valid email address.';
+        if (Object.keys(errs).length) { setErrors(errs); return; }
+        setErrors({});
+        onNext();
+      }
+
+      function clr(key) { if (errors[key]) setErrors(p => ({ ...p, [key]: undefined })); }
+
+      return (
+        <section>
+          <h2 ref={headingRef} tabIndex={-1} className="df-step-heading">Your information</h2>
+
+          <div className="df-field-row">
+            <div className="df-field-group">
+              <label className="df-field-label" htmlFor="fn">First Name</label>
+              <input id="fn" type="text" autoComplete="given-name" className={`df-text-input ${errors.firstName ? 'df-input-error' : ''}`} value={formData.firstName} onChange={e => { update({ firstName: e.target.value }); clr('firstName'); }} />
+              {errors.firstName && <span className="df-error-msg" role="alert">{errors.firstName}</span>}
+            </div>
+            <div className="df-field-group">
+              <label className="df-field-label" htmlFor="ln">Last Name</label>
+              <input id="ln" type="text" autoComplete="family-name" className={`df-text-input ${errors.lastName ? 'df-input-error' : ''}`} value={formData.lastName} onChange={e => { update({ lastName: e.target.value }); clr('lastName'); }} />
+              {errors.lastName && <span className="df-error-msg" role="alert">{errors.lastName}</span>}
+            </div>
+          </div>
+
+          <div className="df-field-group">
+            <label className="df-field-label" htmlFor="em">Email Address</label>
+            <input id="em" type="email" autoComplete="email" placeholder="you@example.com" className={`df-text-input ${errors.email ? 'df-input-error' : ''}`} value={formData.email} onChange={e => { update({ email: e.target.value }); clr('email'); }} />
+            {errors.email && <span className="df-error-msg" role="alert">{errors.email}</span>}
+          </div>
+
+          <div className="df-field-group">
+            <label className="df-field-label" htmlFor="ph">Phone Number <span className="df-optional">(optional)</span></label>
+            <input id="ph" type="tel" autoComplete="tel" placeholder="+1 (555) 000-0000" className="df-text-input" value={formData.phone} onChange={e => update({ phone: e.target.value })} />
+          </div>
+
+          <div className="df-step-actions">
+            <button type="button" className="df-btn df-btn-back" onClick={onBack}>← Back</button>
+            <button type="button" className="df-btn df-btn-primary" onClick={submit}>Continue</button>
+          </div>
+        </section>
+      );
+    }
+
+    // ── Step 3: Honor / Memory ───────────────────────────────────────────────
+    function StepHonor({ formData, update, onNext, onBack, headingRef }) {
+      const { dedicationType } = formData;
+      function toggle(type) { update({ dedicationType: dedicationType === type ? null : type }); }
+
+      return (
+        <section>
+          <h2 ref={headingRef} tabIndex={-1} className="df-step-heading">Dedicate your gift</h2>
+          <p className="df-step-subtitle">Optionally honor or remember someone special with this gift.</p>
+
+          <div className="df-dedication-types">
+            <button type="button" className={`df-dedication-btn ${dedicationType === 'honor' ? 'active' : ''}`} onClick={() => toggle('honor')}>In Honor Of</button>
+            <button type="button" className={`df-dedication-btn ${dedicationType === 'memory' ? 'active' : ''}`} onClick={() => toggle('memory')}>In Memory Of</button>
+          </div>
+
+          {dedicationType && (
+            <div>
+              <div className="df-field-group">
+                <label className="df-field-label" htmlFor="hn">{dedicationType === 'honor' ? "Honored person's name" : 'In memory of'}</label>
+                <input id="hn" type="text" className="df-text-input" value={formData.honoreeName} onChange={e => update({ honoreeName: e.target.value })} />
+              </div>
+              <div className="df-field-group">
+                <label className="df-field-label" htmlFor="hr">Relationship <span className="df-optional">(optional)</span></label>
+                <input id="hr" type="text" className="df-text-input" placeholder="e.g. My grandmother" value={formData.honoreeRelationship} onChange={e => update({ honoreeRelationship: e.target.value })} />
+              </div>
+              <div className="df-field-group">
+                <fieldset className="df-fieldset">
+                  <legend className="df-field-label">Send a notification?</legend>
+                  <div className="df-radio-group">
+                    {[{ v: 'none', l: 'No notification' }, { v: 'email', l: 'By email' }, { v: 'mail', l: 'By mail' }].map(({ v, l }) => (
+                      <label key={v} className="df-radio-label">
+                        <input type="radio" name="notifType" value={v} checked={formData.notificationType === v} onChange={() => update({ notificationType: v })} /> {l}
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+              </div>
+              {formData.notificationType === 'email' && (
+                <div className="df-field-group">
+                  <label className="df-field-label" htmlFor="ne">Notification email</label>
+                  <input id="ne" type="email" className="df-text-input" value={formData.notificationEmail} onChange={e => update({ notificationEmail: e.target.value })} />
+                </div>
+              )}
+              {formData.notificationType === 'mail' && (
+                <div className="df-field-group">
+                  <label className="df-field-label" htmlFor="na">Mailing address</label>
+                  <input id="na" type="text" className="df-text-input" placeholder="Full mailing address" value={formData.notificationAddress} onChange={e => update({ notificationAddress: e.target.value })} />
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="df-step-actions">
+            <button type="button" className="df-btn df-btn-back" onClick={onBack}>← Back</button>
+            <button type="button" className="df-btn df-btn-primary" onClick={onNext}>{dedicationType ? 'Continue' : 'Skip this step'}</button>
+          </div>
+        </section>
+      );
+    }
+
+    // ── Monthly Upsell ───────────────────────────────────────────────────────
+    function StepUpsell({ formData, effectiveAmount, onUpgrade, onDecline, headingRef }) {
+      return (
+        <section className="df-upsell">
+          <div className="df-upsell__icon">♻</div>
+          <h2 ref={headingRef} tabIndex={-1} className="df-step-heading">{config.upsellHeadline}</h2>
+          <p className="df-upsell__message">{config.upsellMessage}</p>
+          <div className="df-upsell__comparison">
+            <div className="df-upsell__amount-box">
+              <span className="df-upsell__box-label">Your one-time gift</span>
+              <span className="df-upsell__box-value">${effectiveAmount > 0 ? effectiveAmount.toFixed(0) : '—'}</span>
+            </div>
+            <div className="df-upsell__arrow">→</div>
+            <div className="df-upsell__amount-box df-upsell__amount-box--monthly">
+              <span className="df-upsell__box-label">As a monthly gift</span>
+              <span className="df-upsell__box-value">${effectiveAmount > 0 ? effectiveAmount.toFixed(0) : '—'}<span className="df-upsell__freq">/mo</span></span>
+            </div>
+          </div>
+          <button type="button" className="df-btn df-btn-primary" onClick={onUpgrade}>{config.upsellCTA}</button>
+          <button type="button" className="df-btn df-btn-ghost" onClick={onDecline}>{config.upsellDecline}</button>
+        </section>
+      );
+    }
+
+    // ── Step 4: Payment ──────────────────────────────────────────────────────
+    function StepPayment({ formData, update, onNext, onBack, headingRef }) {
+      const [errors, setErrors] = useState({});
+      const methods = [{ id: 'card', label: 'Card' }, { id: 'paypal', label: 'PayPal' }, { id: 'ach', label: 'Bank Transfer' }];
+
+      function submit() {
+        const errs = {};
+        if (formData.paymentMethod === 'ach') {
+          if (!formData.achRouting.trim()) errs.achRouting = 'Routing number is required.';
+          if (!formData.achAccount.trim()) errs.achAccount = 'Account number is required.';
+        }
+        if (Object.keys(errs).length) { setErrors(errs); return; }
+        setErrors({});
+        onNext();
+      }
+
+      return (
+        <section>
+          <h2 ref={headingRef} tabIndex={-1} className="df-step-heading">Payment</h2>
+
+          <div className="df-payment-tabs">
+            {methods.map(m => (
+              <button key={m.id} type="button" className={`df-payment-tab ${formData.paymentMethod === m.id ? 'active' : ''}`} onClick={() => update({ paymentMethod: m.id })}>{m.label}</button>
+            ))}
+          </div>
+
+          <div className="df-payment-panel">
+            {formData.paymentMethod === 'card' && (
+              <div>
+                <p className="df-payment-note">Card data is captured securely via <strong>CyberSource Flex Microform</strong>. Configure <code>cyberSourceFlexMicroformKey</code> to activate.</p>
+                <div className="df-flex-microform-placeholder">
+                  <div className="df-flex-microform-field"><span>Card Number</span><span style={{fontSize:'11px'}}>Flex Microform</span></div>
+                  <div className="df-flex-microform-row">
+                    <div className="df-flex-microform-field"><span>Expiry</span></div>
+                    <div className="df-flex-microform-field"><span>CVV</span></div>
+                  </div>
+                </div>
+              </div>
+            )}
+            {formData.paymentMethod === 'paypal' && (
+              <div className="df-paypal-container">
+                <p className="df-payment-note">You'll be redirected to PayPal to authorize your gift.</p>
+                <button type="button" className="df-btn df-btn-paypal">Continue with PayPal</button>
+              </div>
+            )}
+            {formData.paymentMethod === 'ach' && (
+              <div className="df-ach-fields">
+                <div className="df-field-group">
+                  <label className="df-field-label" htmlFor="ar">Routing Number</label>
+                  <input id="ar" type="text" inputMode="numeric" className={`df-text-input ${errors.achRouting ? 'df-input-error' : ''}`} value={formData.achRouting} onChange={e => { update({ achRouting: e.target.value }); if (errors.achRouting) setErrors(p => ({ ...p, achRouting: undefined })); }} />
+                  {errors.achRouting && <span className="df-error-msg" role="alert">{errors.achRouting}</span>}
+                </div>
+                <div className="df-field-group">
+                  <label className="df-field-label" htmlFor="aa">Account Number</label>
+                  <input id="aa" type="text" inputMode="numeric" className={`df-text-input ${errors.achAccount ? 'df-input-error' : ''}`} value={formData.achAccount} onChange={e => { update({ achAccount: e.target.value }); if (errors.achAccount) setErrors(p => ({ ...p, achAccount: undefined })); }} />
+                  {errors.achAccount && <span className="df-error-msg" role="alert">{errors.achAccount}</span>}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="df-trust-bar">
+            <span className="df-trust-item">🔒 256-bit SSL</span>
+            <span className="df-trust-item">PCI DSS compliant</span>
+            <span className="df-trust-item">Secure checkout</span>
+          </div>
+
+          <div className="df-step-actions">
+            <button type="button" className="df-btn df-btn-back" onClick={onBack}>← Back</button>
+            <button type="button" className="df-btn df-btn-primary" onClick={submit}>Review My Gift</button>
+          </div>
+        </section>
+      );
+    }
+
+    // ── Step 5: Review ───────────────────────────────────────────────────────
+    function StepReview({ formData, effectiveAmount, goTo, onSubmit, headingRef }) {
+      const amountDisplay = `$${effectiveAmount.toFixed(2)} ${formData.frequency === 'monthly' ? '/ month' : 'one-time'}`;
+      return (
+        <section>
+          <h2 ref={headingRef} tabIndex={-1} className="df-step-heading">Review your gift</h2>
+          <div className="df-review-card">
+            <div className="df-review-row">
+              <span className="df-review-row__label">Amount</span>
+              <span className="df-review-row__value">{amountDisplay}</span>
+              <button type="button" className="df-review-edit" onClick={() => goTo(STEPS.GIVING)}>Edit</button>
+            </div>
+            <div className="df-review-row">
+              <span className="df-review-row__label">Donor</span>
+              <span className="df-review-row__value">{formData.firstName} {formData.lastName} · {formData.email}</span>
+              <button type="button" className="df-review-edit" onClick={() => goTo(STEPS.PERSONAL)}>Edit</button>
+            </div>
+            {formData.dedicationType && formData.honoreeName && (
+              <div className="df-review-row">
+                <span className="df-review-row__label">{formData.dedicationType === 'honor' ? 'In Honor Of' : 'In Memory Of'}</span>
+                <span className="df-review-row__value">{formData.honoreeName}</span>
+                <button type="button" className="df-review-edit" onClick={() => goTo(STEPS.HONOR)}>Edit</button>
+              </div>
+            )}
+            <div className="df-review-row">
+              <span className="df-review-row__label">Payment</span>
+              <span className="df-review-row__value">{PAYMENT_LABELS[formData.paymentMethod]}</span>
+              <button type="button" className="df-review-edit" onClick={() => goTo(STEPS.PAYMENT)}>Edit</button>
+            </div>
+          </div>
+          <p className="df-legal">{config.legalDisclosure}</p>
+          <button type="button" className="df-btn df-btn-primary" onClick={onSubmit}>{config.ctaReview}</button>
+        </section>
+      );
+    }
+
+    // ── Step 6: Confirmation ─────────────────────────────────────────────────
+    function StepConfirmation({ formData, effectiveAmount, headingRef }) {
+      useEffect(() => { if (headingRef.current) headingRef.current.focus(); }, []);
+      return (
+        <section className="df-confirmation">
+          <div className="df-confirmation__icon">✓</div>
+          <h2 ref={headingRef} tabIndex={-1} className="df-step-heading">{config.confirmationHeadline}</h2>
+          <p className="df-confirmation__message">{config.confirmationMessage}</p>
+          <div className="df-confirmation__summary">
+            <div className="df-confirmation__row"><span>Gift amount</span><strong>${effectiveAmount.toFixed(2)}{formData.frequency === 'monthly' ? ' / month' : ''}</strong></div>
+            <div className="df-confirmation__row"><span>Frequency</span><strong>{formData.frequency === 'monthly' ? 'Monthly' : 'One-time'}</strong></div>
+            {formData.transactionId && <div className="df-confirmation__row"><span>Transaction</span><strong>{formData.transactionId}</strong></div>}
+          </div>
+          {formData.frequency === 'monthly' && (
+            <p className="df-confirmation__recurring-note">Your first charge has been processed. Future gifts will be charged on this date each month. You may cancel at any time.</p>
+          )}
+          {formData.dedicationType && formData.honoreeName && (
+            <p className="df-confirmation__honoree">This gift is dedicated {formData.dedicationType === 'honor' ? 'in honor of' : 'in memory of'} <strong>{formData.honoreeName}</strong>.</p>
+          )}
+          {config.confirmationCTA && (
+            <a href={config.confirmationCTA.url} className="df-btn df-btn-secondary" target="_blank" rel="noopener noreferrer">{config.confirmationCTA.label}</a>
+          )}
+        </section>
+      );
+    }
+
+    // ── Main orchestrator ────────────────────────────────────────────────────
+    function DonationForm() {
+      const [step, setStep] = useState(STEPS.GIVING);
+      const [formData, setFormData] = useState({
+        frequency: config.defaultFrequency,
+        amount: config.defaultAmount,
+        customAmount: '',
+        fund: config.funds.length ? config.funds[0].code : 'GEN',
+        firstName: '', lastName: '', email: '', phone: '',
+        dedicationType: null, honoreeName: '', honoreeRelationship: '',
+        notificationType: 'none', notificationEmail: '', notificationAddress: '',
+        paymentMethod: 'card', achRouting: '', achAccount: '',
+        transactionId: null,
+      });
+      const headingRef = useRef(null);
+
+      function update(changes) { setFormData(p => ({ ...p, ...changes })); }
+
+      const effectiveAmount = formData.customAmount
+        ? parseFloat(formData.customAmount) || 0
+        : formData.amount || 0;
+
+      function getSequence() {
+        const seq = [STEPS.GIVING, STEPS.PERSONAL, STEPS.HONOR];
+        if (formData.frequency === 'one-time' && config.upsellEnabled) seq.push(STEPS.UPSELL);
+        seq.push(STEPS.PAYMENT, STEPS.REVIEW, STEPS.CONFIRMATION);
+        return seq;
+      }
+
+      function next() {
+        const seq = getSequence();
+        const i = seq.indexOf(step);
+        if (i < seq.length - 1) setStep(seq[i + 1]);
+      }
+
+      function prev() {
+        const seq = getSequence();
+        const i = seq.indexOf(step);
+        if (i > 0) setStep(seq[i - 1]);
+      }
+
+      useEffect(() => {
+        if (headingRef.current) headingRef.current.focus();
+      }, [step]);
+
+      function submit() {
+        const txId = 'TXN-' + Date.now();
+        update({ transactionId: txId });
+        setStep(STEPS.CONFIRMATION);
+      }
+
+      const progressIndex = STEP_TO_PROGRESS[step] ?? -1;
+
+      return (
+        <div className="df-card">
+          {step !== STEPS.CONFIRMATION && progressIndex >= 0 && (
+            <nav className="df-progress" aria-label="Form progress">
+              {PROGRESS_LABELS.map((label, i) => (
+                <div key={label} className={`df-progress-step ${i < progressIndex ? 'completed' : ''} ${i === progressIndex ? 'active' : ''}`}>
+                  <span className="df-progress-dot">{i < progressIndex ? '✓' : i + 1}</span>
+                  <span className="df-progress-label">{label}</span>
+                </div>
+              ))}
+            </nav>
+          )}
+
+          {step === STEPS.GIVING    && <StepGiving    formData={formData} update={update} onNext={next} headingRef={headingRef} />}
+          {step === STEPS.PERSONAL  && <StepPersonal  formData={formData} update={update} onNext={next} onBack={prev} headingRef={headingRef} />}
+          {step === STEPS.HONOR     && <StepHonor     formData={formData} update={update} onNext={next} onBack={prev} headingRef={headingRef} />}
+          {step === STEPS.UPSELL    && <StepUpsell    formData={formData} effectiveAmount={effectiveAmount} onUpgrade={() => { update({ frequency: 'monthly' }); next(); }} onDecline={next} headingRef={headingRef} />}
+          {step === STEPS.PAYMENT   && <StepPayment   formData={formData} update={update} onNext={next} onBack={prev} headingRef={headingRef} />}
+          {step === STEPS.REVIEW    && <StepReview    formData={formData} effectiveAmount={effectiveAmount} goTo={setStep} onSubmit={submit} headingRef={headingRef} />}
+          {step === STEPS.CONFIRMATION && <StepConfirmation formData={formData} effectiveAmount={effectiveAmount} headingRef={headingRef} />}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<DonationForm />);
+  </script>
+</body>
+</html>
