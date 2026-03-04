@@ -1,179 +1,260 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './DonationForm.css';
+import defaultConfig, { validateConfig } from './defaultConfig';
+import { pushEvent } from './analytics';
+import StepGivingSetup from './steps/StepGivingSetup';
+import StepPersonalInfo from './steps/StepPersonalInfo';
+import StepHonorMemory from './steps/StepHonorMemory';
+import StepMonthlyUpsell from './steps/StepMonthlyUpsell';
+import StepPayment from './steps/StepPayment';
+import StepReview from './steps/StepReview';
+import StepConfirmation from './steps/StepConfirmation';
 
-const PRESET_AMOUNTS = [10, 25, 50, 100];
+// ─── Step identifiers ─────────────────────────────────────────────────────────
+export const STEPS = {
+  GIVING_SETUP: 0,
+  PERSONAL_INFO: 1,
+  HONOR_MEMORY: 2,
+  MONTHLY_UPSELL: 3,
+  PAYMENT: 4,
+  REVIEW: 5,
+  CONFIRMATION: 6,
+};
 
-function DonationForm() {
-  const [selectedAmount, setSelectedAmount] = useState(null);
-  const [customAmount, setCustomAmount] = useState('');
-  const [frequency, setFrequency] = useState('one-time');
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [submitted, setSubmitted] = useState(false);
-  const [errors, setErrors] = useState({});
+// Progress bar labels (excludes upsell and confirmation — they're not numbered)
+const PROGRESS_LABELS = ['Gift Details', 'Your Info', 'Dedication', 'Payment', 'Review'];
 
-  const effectiveAmount = selectedAmount !== null
-    ? selectedAmount
-    : parseFloat(customAmount) || 0;
+// Maps each STEP to a 0-based progress index (-1 = not in progress bar)
+const STEP_TO_PROGRESS = {
+  [STEPS.GIVING_SETUP]: 0,
+  [STEPS.PERSONAL_INFO]: 1,
+  [STEPS.HONOR_MEMORY]: 2,
+  [STEPS.MONTHLY_UPSELL]: 3, // visually sits at "Payment"
+  [STEPS.PAYMENT]: 3,
+  [STEPS.REVIEW]: 4,
+  [STEPS.CONFIRMATION]: -1,
+};
 
-  function validate() {
-    const newErrors = {};
-    if (!name.trim()) newErrors.name = 'Name is required.';
-    if (!email.trim()) newErrors.email = 'Email is required.';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-      newErrors.email = 'Enter a valid email address.';
-    if (effectiveAmount <= 0)
-      newErrors.amount = 'Please select or enter a donation amount.';
-    return newErrors;
+// ─── Component ────────────────────────────────────────────────────────────────
+function DonationForm({ config: userConfig = {} }) {
+  // Merge user config over defaults. This is the single source of truth for all
+  // marketer-configurable values.
+  const config = { ...defaultConfig, ...userConfig };
+
+  // Validate config on mount — logs clear errors for missing required keys.
+  useEffect(() => {
+    validateConfig(config);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Form state ──────────────────────────────────────────────────────────────
+  const [step, setStep] = useState(STEPS.GIVING_SETUP);
+
+  const defaultFund =
+    config.funds && config.funds.length >= 1 ? config.funds[0].code : 'GEN';
+
+  const [formData, setFormData] = useState({
+    // Step 1
+    frequency: config.defaultFrequency,
+    amount: config.defaultAmount,
+    customAmount: '',
+    fund: defaultFund,
+    // Step 2
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    // Step 3
+    dedicationType: null, // null | 'honor' | 'memory'
+    honoreeName: '',
+    honoreeRelationship: '',
+    notificationType: 'none', // 'none' | 'email' | 'mail'
+    notificationEmail: '',
+    notificationAddress: '',
+    // Step 4
+    paymentMethod: 'card', // 'card' | 'paypal' | 'apple-pay' | 'google-pay' | 'ach'
+    cardToken: null,
+    achRouting: '',
+    achAccount: '',
+    // Submission
+    transactionId: null,
+  });
+
+  const headingRef = useRef(null);
+
+  function updateFormData(updates) {
+    setFormData((prev) => ({ ...prev, ...updates }));
   }
 
-  function handlePreset(amount) {
-    setSelectedAmount(amount);
-    setCustomAmount('');
+  // ── Effective amount ────────────────────────────────────────────────────────
+  function getEffectiveAmount() {
+    return formData.customAmount
+      ? parseFloat(formData.customAmount) || 0
+      : formData.amount || 0;
   }
 
-  function handleCustomAmount(e) {
-    setSelectedAmount(null);
-    setCustomAmount(e.target.value);
-  }
-
-  function handleSubmit(e) {
-    e.preventDefault();
-    const validationErrors = validate();
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      return;
+  // ── Step sequence ───────────────────────────────────────────────────────────
+  // Built dynamically — upsell is injected only for one-time donors when enabled.
+  function getStepSequence() {
+    const seq = [STEPS.GIVING_SETUP, STEPS.PERSONAL_INFO, STEPS.HONOR_MEMORY];
+    if (formData.frequency === 'one-time' && config.upsellEnabled) {
+      seq.push(STEPS.MONTHLY_UPSELL);
     }
-    setErrors({});
-    setSubmitted(true);
+    seq.push(STEPS.PAYMENT, STEPS.REVIEW, STEPS.CONFIRMATION);
+    return seq;
   }
 
-  if (submitted) {
+  function nextStep() {
+    const seq = getStepSequence();
+    const idx = seq.indexOf(step);
+    if (idx < seq.length - 1) {
+      setStep(seq[idx + 1]);
+    }
+  }
+
+  function prevStep() {
+    const seq = getStepSequence();
+    const idx = seq.indexOf(step);
+    if (idx > 0) {
+      setStep(seq[idx - 1]);
+    }
+  }
+
+  // ── Analytics: fire step_view on each step transition ──────────────────────
+  useEffect(() => {
+    if (step !== STEPS.CONFIRMATION) {
+      pushEvent(config.analytics.stepViewEvent, { step });
+    }
+    // Move focus to step heading for accessibility (WCAG 2.1 AA)
+    if (headingRef.current) {
+      headingRef.current.focus();
+    }
+  }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Submission ──────────────────────────────────────────────────────────────
+  function handleSubmit() {
+    const txId = 'TXN-' + Date.now();
+    updateFormData({ transactionId: txId });
+    // Conversion event is fired inside StepConfirmation on mount (after state
+    // updates propagate), so we just advance to confirmation here.
+    setStep(STEPS.CONFIRMATION);
+  }
+
+  const effectiveAmount = getEffectiveAmount();
+  const progressIndex = STEP_TO_PROGRESS[step] ?? -1;
+
+  // ── Confirmation renders without progress bar or card chrome ───────────────
+  if (step === STEPS.CONFIRMATION) {
     return (
-      <div className="donation-form-wrapper">
-        <div className="donation-card success-card">
-          <div className="success-icon">✓</div>
-          <h2>Thank You, {name}!</h2>
-          <p>
-            Your {frequency === 'monthly' ? 'monthly' : 'one-time'} donation of{' '}
-            <strong>${effectiveAmount.toFixed(2)}</strong> has been received.
-          </p>
-          <p className="success-sub">A confirmation will be sent to <strong>{email}</strong>.</p>
-          <button
-            className="btn btn-secondary"
-            onClick={() => {
-              setSubmitted(false);
-              setSelectedAmount(null);
-              setCustomAmount('');
-              setFrequency('one-time');
-              setName('');
-              setEmail('');
-            }}
-          >
-            Make Another Donation
-          </button>
+      <div className={`df-wrapper df-layout-${config.layout}`}>
+        <div className="df-card df-card--confirmation">
+          <StepConfirmation
+            config={config}
+            formData={formData}
+            effectiveAmount={effectiveAmount}
+            headingRef={headingRef}
+          />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="donation-form-wrapper">
-      <div className="donation-card">
-        <h1 className="form-title">Make a Donation</h1>
-        <p className="form-subtitle">Your generosity makes a difference.</p>
-
-        <form onSubmit={handleSubmit} noValidate>
-          {/* Frequency */}
-          <div className="field-group">
-            <div className="frequency-toggle">
-              <button
-                type="button"
-                className={`toggle-btn ${frequency === 'one-time' ? 'active' : ''}`}
-                onClick={() => setFrequency('one-time')}
+    <div className={`df-wrapper df-layout-${config.layout}`}>
+      <div className="df-card">
+        {/* ── Progress indicator ────────────────────────────────────────── */}
+        {progressIndex >= 0 && (
+          <nav className="df-progress" aria-label="Form progress">
+            {PROGRESS_LABELS.map((label, i) => (
+              <div
+                key={label}
+                className={[
+                  'df-progress-step',
+                  i < progressIndex ? 'completed' : '',
+                  i === progressIndex ? 'active' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                aria-current={i === progressIndex ? 'step' : undefined}
               >
-                One-Time
-              </button>
-              <button
-                type="button"
-                className={`toggle-btn ${frequency === 'monthly' ? 'active' : ''}`}
-                onClick={() => setFrequency('monthly')}
-              >
-                Monthly
-              </button>
-            </div>
-          </div>
+                <span className="df-progress-dot" aria-hidden="true">
+                  {i < progressIndex ? '✓' : i + 1}
+                </span>
+                <span className="df-progress-label">{label}</span>
+              </div>
+            ))}
+          </nav>
+        )}
 
-          {/* Amount Selection */}
-          <div className="field-group">
-            <label className="field-label">Donation Amount</label>
-            <div className="preset-amounts">
-              {PRESET_AMOUNTS.map((amount) => (
-                <button
-                  key={amount}
-                  type="button"
-                  className={`amount-btn ${selectedAmount === amount ? 'active' : ''}`}
-                  onClick={() => handlePreset(amount)}
-                >
-                  ${amount}
-                </button>
-              ))}
-            </div>
-            <div className="custom-amount-wrapper">
-              <span className="currency-symbol">$</span>
-              <input
-                type="number"
-                className={`custom-amount-input ${errors.amount ? 'input-error' : ''}`}
-                placeholder="Custom amount"
-                value={customAmount}
-                min="1"
-                onChange={handleCustomAmount}
-              />
-            </div>
-            {errors.amount && <span className="error-msg">{errors.amount}</span>}
-          </div>
+        {/* ── Steps ────────────────────────────────────────────────────── */}
+        {step === STEPS.GIVING_SETUP && (
+          <StepGivingSetup
+            config={config}
+            formData={formData}
+            updateFormData={updateFormData}
+            onNext={nextStep}
+            effectiveAmount={effectiveAmount}
+            headingRef={headingRef}
+          />
+        )}
 
-          {/* Personal Info */}
-          <div className="field-group">
-            <label className="field-label" htmlFor="donor-name">Full Name</label>
-            <input
-              id="donor-name"
-              type="text"
-              className={`text-input ${errors.name ? 'input-error' : ''}`}
-              placeholder="Jane Doe"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-            {errors.name && <span className="error-msg">{errors.name}</span>}
-          </div>
+        {step === STEPS.PERSONAL_INFO && (
+          <StepPersonalInfo
+            config={config}
+            formData={formData}
+            updateFormData={updateFormData}
+            onNext={nextStep}
+            onBack={prevStep}
+            headingRef={headingRef}
+          />
+        )}
 
-          <div className="field-group">
-            <label className="field-label" htmlFor="donor-email">Email Address</label>
-            <input
-              id="donor-email"
-              type="email"
-              className={`text-input ${errors.email ? 'input-error' : ''}`}
-              placeholder="jane@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-            {errors.email && <span className="error-msg">{errors.email}</span>}
-          </div>
+        {step === STEPS.HONOR_MEMORY && (
+          <StepHonorMemory
+            config={config}
+            formData={formData}
+            updateFormData={updateFormData}
+            onNext={nextStep}
+            onBack={prevStep}
+            headingRef={headingRef}
+          />
+        )}
 
-          {/* Summary & Submit */}
-          {effectiveAmount > 0 && (
-            <div className="donation-summary">
-              You are donating{' '}
-              <strong>${effectiveAmount.toFixed(2)}</strong>{' '}
-              {frequency === 'monthly' ? 'per month' : 'today'}.
-            </div>
-          )}
+        {step === STEPS.MONTHLY_UPSELL && (
+          <StepMonthlyUpsell
+            config={config}
+            formData={formData}
+            effectiveAmount={effectiveAmount}
+            onUpgrade={() => {
+              updateFormData({ frequency: 'monthly' });
+              nextStep();
+            }}
+            onDecline={nextStep}
+            headingRef={headingRef}
+          />
+        )}
 
-          <button type="submit" className="btn btn-primary">
-            Donate {effectiveAmount > 0 ? `$${effectiveAmount.toFixed(2)}` : ''}
-            {frequency === 'monthly' ? '/mo' : ''}
-          </button>
-        </form>
+        {step === STEPS.PAYMENT && (
+          <StepPayment
+            config={config}
+            formData={formData}
+            updateFormData={updateFormData}
+            onNext={nextStep}
+            onBack={prevStep}
+            headingRef={headingRef}
+          />
+        )}
+
+        {step === STEPS.REVIEW && (
+          <StepReview
+            config={config}
+            formData={formData}
+            effectiveAmount={effectiveAmount}
+            onEdit={setStep}
+            onSubmit={handleSubmit}
+            STEPS={STEPS}
+            headingRef={headingRef}
+          />
+        )}
       </div>
     </div>
   );

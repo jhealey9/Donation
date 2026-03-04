@@ -1,248 +1,986 @@
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+/* ============================================================
+   Donation Form Component — Styles
+   White-label theming via CSS custom properties.
+   Override any --df-* variable in your host page's :root {}
+   to apply your organization's brand.
+   ============================================================ */
+
+/* ── Custom Properties (theme tokens) ───────────────────────────────────── */
+:root {
+  --df-primary: #1a56a0;
+  --df-primary-dark: #144080;
+  --df-primary-light: #e8f0fb;
+  --df-monthly-accent: #e8a020;
+  --df-monthly-accent-light: #fef3dc;
+  --df-success: #16a34a;
+  --df-success-light: #dcfce7;
+  --df-error: #dc2626;
+  --df-error-light: #fee2e2;
+  --df-text: #111827;
+  --df-text-muted: #6b7280;
+  --df-border: #e5e7eb;
+  --df-bg: #ffffff;
+  --df-surface: #f9fafb;
+  --df-radius: 10px;
+  --df-radius-sm: 6px;
+  --df-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --df-shadow: 0 4px 32px rgba(0, 0, 0, 0.09);
+  --df-transition: 0.18s ease;
 }
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: #f0f4f8;
-  min-height: 100vh;
-}
-
-.donation-form-wrapper {
+/* ── Wrapper & layout ────────────────────────────────────────────────────── */
+.df-wrapper {
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   min-height: 100vh;
-  padding: 24px;
+  padding: 32px 16px;
+  font-family: var(--df-font);
+  background: var(--df-surface);
+  box-sizing: border-box;
 }
 
-.donation-card {
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+.df-wrapper * {
+  box-sizing: border-box;
+}
+
+/* Layout modes — for future campaign page embedding */
+.df-layout-form-left  { flex-direction: row; }
+.df-layout-form-right { flex-direction: row-reverse; }
+
+/* ── Card ────────────────────────────────────────────────────────────────── */
+.df-card {
+  background: var(--df-bg);
+  border-radius: var(--df-radius);
+  box-shadow: var(--df-shadow);
   padding: 40px;
   width: 100%;
   max-width: 480px;
 }
 
-.form-title {
-  font-size: 28px;
-  font-weight: 700;
-  color: #1a202c;
-  margin-bottom: 8px;
+.df-card--confirmation {
+  text-align: center;
 }
 
-.form-subtitle {
-  font-size: 15px;
-  color: #718096;
-  margin-bottom: 32px;
-}
-
-.field-group {
-  margin-bottom: 24px;
-}
-
-.field-label {
-  display: block;
-  font-size: 14px;
-  font-weight: 600;
-  color: #4a5568;
-  margin-bottom: 8px;
-}
-
-/* Frequency Toggle */
-.frequency-toggle {
+/* ── Progress bar ────────────────────────────────────────────────────────── */
+.df-progress {
   display: flex;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  align-items: flex-start;
+  gap: 0;
+  margin-bottom: 32px;
   overflow: hidden;
 }
 
-.toggle-btn {
+.df-progress-step {
   flex: 1;
-  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  color: var(--df-text-muted);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* Connector line between dots */
+.df-progress-step:not(:first-child)::before {
+  content: '';
+  position: absolute;
+  top: 13px;
+  right: calc(50% + 14px);
+  left: calc(-50% + 14px);
+  height: 2px;
+  background: var(--df-border);
+  transition: background var(--df-transition);
+}
+
+.df-progress-step.completed::before,
+.df-progress-step.active::before {
+  background: var(--df-primary-light);
+}
+
+.df-progress-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--df-border);
+  background: var(--df-bg);
+  color: var(--df-text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--df-transition);
+  z-index: 1;
+}
+
+.df-progress-step.active .df-progress-dot {
+  border-color: var(--df-primary);
+  background: var(--df-primary);
+  color: #fff;
+}
+
+.df-progress-step.completed .df-progress-dot {
+  border-color: var(--df-primary);
+  background: var(--df-primary-light);
+  color: var(--df-primary);
+}
+
+.df-progress-step.active .df-progress-label {
+  color: var(--df-primary);
+  font-weight: 600;
+}
+
+.df-progress-label {
+  font-size: 10px;
+  letter-spacing: 0.01em;
+  text-align: center;
+}
+
+/* ── Step headings ────────────────────────────────────────────────────────── */
+.df-step-heading {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--df-text);
+  margin-bottom: 24px;
+  outline: none; /* Focus is managed programmatically */
+}
+
+.df-step-subtitle {
+  font-size: 14px;
+  color: var(--df-text-muted);
+  margin-top: -16px;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+/* ── Field groups ─────────────────────────────────────────────────────────── */
+.df-field-group {
+  margin-bottom: 20px;
+}
+
+.df-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 0;
+}
+
+.df-field-row .df-field-group {
+  margin-bottom: 20px;
+}
+
+.df-field-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--df-text);
+  margin-bottom: 8px;
+  letter-spacing: 0.01em;
+}
+
+.df-optional {
+  font-weight: 400;
+  color: var(--df-text-muted);
+}
+
+/* ── Frequency toggle ─────────────────────────────────────────────────────── */
+.df-frequency-toggle {
+  display: flex;
+  border-radius: var(--df-radius-sm);
+  overflow: hidden;
+  border: 2px solid var(--df-border);
+}
+
+.df-toggle-btn {
+  flex: 1;
+  padding: 11px 8px;
   border: none;
   background: transparent;
+  font-family: var(--df-font);
   font-size: 14px;
-  font-weight: 500;
-  color: #718096;
+  font-weight: 600;
+  color: var(--df-text-muted);
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition: background var(--df-transition), color var(--df-transition);
+  letter-spacing: 0.01em;
 }
 
-.toggle-btn.active {
-  background: #4f46e5;
-  color: #ffffff;
+/* Monthly button — uses the accent color when active */
+.df-toggle-monthly.active {
+  background: var(--df-monthly-accent);
+  color: #fff;
 }
 
-/* Preset Amounts */
-.preset-amounts {
+/* One-time button — uses the primary color when active */
+.df-toggle-onetime.active {
+  background: var(--df-primary);
+  color: #fff;
+}
+
+.df-toggle-btn:not(.active):hover {
+  background: var(--df-surface);
+}
+
+.df-frequency-hint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--df-monthly-accent);
+  font-weight: 500;
+}
+
+/* ── Preset amounts ────────────────────────────────────────────────────────── */
+.df-preset-amounts {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 8px;
   margin-bottom: 12px;
 }
 
-.amount-btn {
-  padding: 12px 8px;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
+.df-amount-btn {
+  padding: 13px 6px;
+  border: 2px solid var(--df-border);
+  border-radius: var(--df-radius-sm);
   background: transparent;
+  font-family: var(--df-font);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--df-text);
+  cursor: pointer;
+  transition: all var(--df-transition);
+}
+
+.df-amount-btn:hover {
+  border-color: var(--df-primary);
+  color: var(--df-primary);
+}
+
+.df-amount-btn.active {
+  border-color: var(--df-primary);
+  background: var(--df-primary-light);
+  color: var(--df-primary);
+}
+
+/* ── Custom amount ─────────────────────────────────────────────────────────── */
+.df-custom-amount-wrapper {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--df-border);
+  border-radius: var(--df-radius-sm);
+  overflow: hidden;
+  transition: border-color var(--df-transition);
+}
+
+.df-custom-amount-wrapper:focus-within {
+  border-color: var(--df-primary);
+}
+
+.df-input-error-border {
+  border-color: var(--df-error) !important;
+}
+
+.df-currency-symbol {
+  padding: 0 14px;
   font-size: 15px;
   font-weight: 600;
-  color: #4a5568;
-  cursor: pointer;
-  transition: border-color 0.2s, color 0.2s, background 0.2s;
-}
-
-.amount-btn:hover {
-  border-color: #4f46e5;
-  color: #4f46e5;
-}
-
-.amount-btn.active {
-  border-color: #4f46e5;
-  background: #eef2ff;
-  color: #4f46e5;
-}
-
-/* Custom Amount */
-.custom-amount-wrapper {
-  display: flex;
-  align-items: center;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  overflow: hidden;
-  transition: border-color 0.2s;
-}
-
-.custom-amount-wrapper:focus-within {
-  border-color: #4f46e5;
-}
-
-.currency-symbol {
-  padding: 0 12px;
-  font-size: 16px;
-  color: #718096;
-  background: #f7fafc;
-  border-right: 1px solid #e2e8f0;
-  height: 100%;
-  display: flex;
-  align-items: center;
+  color: var(--df-text-muted);
+  background: var(--df-surface);
+  border-right: 1px solid var(--df-border);
   align-self: stretch;
+  display: flex;
+  align-items: center;
 }
 
-.custom-amount-input {
+.df-custom-amount-input {
   flex: 1;
-  padding: 12px;
+  padding: 12px 14px;
   border: none;
   outline: none;
+  font-family: var(--df-font);
   font-size: 15px;
-  color: #1a202c;
+  color: var(--df-text);
+  background: transparent;
 }
 
-/* Text Inputs */
-.text-input {
-  width: 100%;
+/* Hide number input spinners */
+.df-custom-amount-input::-webkit-outer-spin-button,
+.df-custom-amount-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+.df-custom-amount-input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+/* ── Impact line ───────────────────────────────────────────────────────────── */
+.df-impact-line {
   padding: 12px 16px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  background: var(--df-primary-light);
+  border-left: 3px solid var(--df-primary);
+  border-radius: 0 var(--df-radius-sm) var(--df-radius-sm) 0;
+  font-size: 13px;
+  color: var(--df-text);
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+/* ── Fund selector ─────────────────────────────────────────────────────────── */
+.df-select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--df-border);
+  border-radius: var(--df-radius-sm);
+  font-family: var(--df-font);
   font-size: 15px;
-  color: #1a202c;
+  color: var(--df-text);
+  background: var(--df-bg);
+  cursor: pointer;
   outline: none;
-  transition: border-color 0.2s;
+  transition: border-color var(--df-transition);
+  appearance: auto;
 }
 
-.text-input:focus {
-  border-color: #4f46e5;
+.df-select:focus {
+  border-color: var(--df-primary);
 }
 
-.input-error {
-  border-color: #e53e3e !important;
+/* ── Premium offer ─────────────────────────────────────────────────────────── */
+.df-premium-offer {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px dashed var(--df-border);
+  border-radius: var(--df-radius-sm);
+  background: var(--df-surface);
+  margin-bottom: 20px;
+  position: relative;
+  transition: all var(--df-transition);
 }
 
-.error-msg {
+.df-premium-offer--earned {
+  border-color: var(--df-monthly-accent);
+  background: var(--df-monthly-accent-light);
+}
+
+.df-premium-offer__img {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: var(--df-radius-sm);
+  flex-shrink: 0;
+}
+
+.df-premium-offer__headline {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--df-text);
+  margin-bottom: 4px;
+}
+
+.df-premium-offer__desc {
+  font-size: 12px;
+  color: var(--df-text-muted);
+  line-height: 1.5;
+}
+
+.df-premium-offer__badge {
+  position: absolute;
+  top: -10px;
+  right: 12px;
+  background: var(--df-monthly-accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 99px;
+  letter-spacing: 0.04em;
+}
+
+/* ── Text inputs ───────────────────────────────────────────────────────────── */
+.df-text-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--df-border);
+  border-radius: var(--df-radius-sm);
+  font-family: var(--df-font);
+  font-size: 15px;
+  color: var(--df-text);
+  background: var(--df-bg);
+  outline: none;
+  transition: border-color var(--df-transition);
+}
+
+.df-text-input:focus {
+  border-color: var(--df-primary);
+}
+
+.df-input-error {
+  border-color: var(--df-error) !important;
+}
+
+.df-error-msg {
   display: block;
   margin-top: 6px;
-  font-size: 13px;
-  color: #e53e3e;
+  font-size: 12px;
+  color: var(--df-error);
+  font-weight: 500;
 }
 
-/* Summary */
-.donation-summary {
-  background: #f0f4ff;
-  border-radius: 8px;
-  padding: 14px 16px;
-  font-size: 14px;
-  color: #4a5568;
+/* ── Dedication types ─────────────────────────────────────────────────────── */
+.df-dedication-types {
+  display: flex;
+  gap: 10px;
   margin-bottom: 20px;
 }
 
-/* Buttons */
-.btn {
-  width: 100%;
-  padding: 14px;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
+.df-dedication-btn {
+  flex: 1;
+  padding: 12px;
+  border: 2px solid var(--df-border);
+  border-radius: var(--df-radius-sm);
+  background: transparent;
+  font-family: var(--df-font);
+  font-size: 13px;
   font-weight: 600;
+  color: var(--df-text-muted);
   cursor: pointer;
-  transition: background 0.2s, transform 0.1s;
+  transition: all var(--df-transition);
 }
 
-.btn:active {
-  transform: scale(0.98);
+.df-dedication-btn.active {
+  border-color: var(--df-primary);
+  background: var(--df-primary-light);
+  color: var(--df-primary);
 }
 
-.btn-primary {
-  background: #4f46e5;
-  color: #ffffff;
+.df-dedication-fields {
+  animation: df-slide-in 0.2s ease;
 }
 
-.btn-primary:hover {
-  background: #4338ca;
+@keyframes df-slide-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-.btn-secondary {
-  background: #e2e8f0;
-  color: #4a5568;
+/* ── Fieldset / radio groups ──────────────────────────────────────────────── */
+.df-fieldset {
+  border: none;
+  padding: 0;
+  margin: 0;
 }
 
-.btn-secondary:hover {
-  background: #cbd5e0;
+.df-radio-group {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
 }
 
-/* Success Card */
-.success-card {
+.df-radio-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--df-text);
+  cursor: pointer;
+}
+
+.df-radio-label input[type='radio'] {
+  accent-color: var(--df-primary);
+  width: 16px;
+  height: 16px;
+}
+
+/* ── Monthly upsell ────────────────────────────────────────────────────────── */
+.df-upsell {
   text-align: center;
 }
 
-.success-icon {
-  width: 64px;
-  height: 64px;
-  background: #48bb78;
-  color: #ffffff;
-  border-radius: 50%;
-  font-size: 32px;
-  line-height: 64px;
-  margin: 0 auto 20px;
-}
-
-.success-card h2 {
-  font-size: 24px;
-  font-weight: 700;
-  color: #1a202c;
-  margin-bottom: 12px;
-}
-
-.success-card p {
-  font-size: 15px;
-  color: #4a5568;
+.df-upsell__icon {
+  font-size: 36px;
   margin-bottom: 8px;
 }
 
-.success-sub {
-  margin-bottom: 28px !important;
+.df-upsell__message {
+  font-size: 14px;
+  color: var(--df-text-muted);
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.df-upsell__comparison {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.df-upsell__amount-box {
+  flex: 1;
+  padding: 16px;
+  border: 2px solid var(--df-border);
+  border-radius: var(--df-radius-sm);
+  text-align: center;
+}
+
+.df-upsell__amount-box--monthly {
+  border-color: var(--df-monthly-accent);
+  background: var(--df-monthly-accent-light);
+}
+
+.df-upsell__box-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--df-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+
+.df-upsell__box-value {
+  display: block;
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--df-text);
+}
+
+.df-upsell__amount-box--monthly .df-upsell__box-value {
+  color: var(--df-monthly-accent);
+}
+
+.df-upsell__freq {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--df-text-muted);
+}
+
+.df-upsell__arrow {
+  font-size: 20px;
+  color: var(--df-text-muted);
+  flex-shrink: 0;
+}
+
+/* ── Payment tabs ─────────────────────────────────────────────────────────── */
+.df-payment-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.df-payment-tab {
+  padding: 8px 14px;
+  border: 1px solid var(--df-border);
+  border-radius: 99px;
+  background: transparent;
+  font-family: var(--df-font);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--df-text-muted);
+  cursor: pointer;
+  transition: all var(--df-transition);
+}
+
+.df-payment-tab.active {
+  border-color: var(--df-primary);
+  background: var(--df-primary-light);
+  color: var(--df-primary);
+}
+
+.df-payment-tab:hover:not(.active) {
+  border-color: var(--df-primary);
+  color: var(--df-primary);
+}
+
+/* ── Payment panel ────────────────────────────────────────────────────────── */
+.df-payment-panel {
+  margin-bottom: 20px;
+}
+
+.df-payment-note {
+  font-size: 13px;
+  color: var(--df-text-muted);
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
+.df-payment-note--muted {
+  font-size: 12px;
+  color: var(--df-text-muted);
+}
+
+/* ── CyberSource Flex Microform placeholder ───────────────────────────────── */
+.df-flex-microform-placeholder {
+  border: 1px solid var(--df-border);
+  border-radius: var(--df-radius-sm);
+  overflow: hidden;
+}
+
+.df-flex-microform-field {
+  padding: 14px 16px;
+  background: var(--df-surface);
+  font-size: 13px;
+  color: var(--df-text-muted);
+  border-bottom: 1px solid var(--df-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.df-flex-microform-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.df-flex-microform-row .df-flex-microform-field {
+  border-bottom: none;
+}
+
+.df-flex-microform-row .df-flex-microform-field:first-child {
+  border-right: 1px solid var(--df-border);
+}
+
+/* ── Wallet / PayPal buttons ──────────────────────────────────────────────── */
+.df-wallet-container,
+.df-paypal-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  background: var(--df-surface);
+  border-radius: var(--df-radius-sm);
+}
+
+.df-btn-paypal {
+  background: #ffc439;
+  color: #003087;
+  font-weight: 700;
+  border: none;
+  padding: 13px 32px;
+  border-radius: var(--df-radius-sm);
+  font-family: var(--df-font);
+  font-size: 15px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.df-btn-apple-pay {
+  background: #000;
+  color: #fff;
+  font-weight: 600;
+  border: none;
+  padding: 13px 32px;
+  border-radius: var(--df-radius-sm);
+  font-family: var(--df-font);
+  font-size: 15px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.df-btn-google-pay {
+  background: #fff;
+  color: #3c4043;
+  font-weight: 600;
+  border: 1px solid var(--df-border);
+  padding: 13px 32px;
+  border-radius: var(--df-radius-sm);
+  font-family: var(--df-font);
+  font-size: 15px;
+  cursor: pointer;
+  width: 100%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* ── ACH fields ───────────────────────────────────────────────────────────── */
+.df-ach-fields {
+  padding: 16px;
+  background: var(--df-surface);
+  border-radius: var(--df-radius-sm);
+}
+
+/* ── Trust bar ─────────────────────────────────────────────────────────────── */
+.df-trust-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 10px 0;
+  margin-bottom: 20px;
+  border-top: 1px solid var(--df-border);
+  border-bottom: 1px solid var(--df-border);
+}
+
+.df-trust-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--df-text-muted);
+  white-space: nowrap;
+}
+
+.df-trust-icon {
+  font-size: 13px;
+}
+
+/* ── Review card ───────────────────────────────────────────────────────────── */
+.df-review-card {
+  border: 1px solid var(--df-border);
+  border-radius: var(--df-radius-sm);
+  overflow: hidden;
+  margin-bottom: 20px;
+  list-style: none;
+  padding: 0;
+}
+
+.df-review-row {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  gap: 12px;
+  border-bottom: 1px solid var(--df-border);
+}
+
+.df-review-row:last-child {
+  border-bottom: none;
+}
+
+.df-review-row__label {
+  flex: 0 0 96px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--df-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.df-review-row__value {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--df-text);
+}
+
+.df-review-edit {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  font-family: var(--df-font);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--df-primary);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--df-radius-sm);
+  transition: background var(--df-transition);
+}
+
+.df-review-edit:hover {
+  background: var(--df-primary-light);
+}
+
+/* ── Legal disclosure ─────────────────────────────────────────────────────── */
+.df-legal {
+  font-size: 11px;
+  color: var(--df-text-muted);
+  line-height: 1.6;
+  margin-bottom: 20px;
+  padding: 0 2px;
+}
+
+/* ── Confirmation ─────────────────────────────────────────────────────────── */
+.df-confirmation__icon {
+  width: 68px;
+  height: 68px;
+  background: var(--df-success);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+}
+
+.df-confirmation__message {
+  font-size: 15px;
+  color: var(--df-text-muted);
+  margin-bottom: 24px;
+  line-height: 1.6;
+}
+
+.df-confirmation__summary {
+  background: var(--df-surface);
+  border-radius: var(--df-radius-sm);
+  border: 1px solid var(--df-border);
+  overflow: hidden;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.df-confirmation__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--df-border);
+  font-size: 14px;
+}
+
+.df-confirmation__row:last-child {
+  border-bottom: none;
+}
+
+.df-confirmation__row span {
+  color: var(--df-text-muted);
+}
+
+.df-confirmation__row strong {
+  color: var(--df-text);
+}
+
+.df-confirmation__recurring-note {
+  font-size: 13px;
+  color: var(--df-text-muted);
+  line-height: 1.6;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background: var(--df-primary-light);
+  border-radius: var(--df-radius-sm);
+  text-align: left;
+}
+
+.df-confirmation__honoree {
+  font-size: 14px;
+  color: var(--df-text-muted);
+  margin-bottom: 16px;
+  font-style: italic;
+}
+
+/* ── Buttons ──────────────────────────────────────────────────────────────── */
+.df-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 24px;
+  border: none;
+  border-radius: var(--df-radius-sm);
+  font-family: var(--df-font);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background var(--df-transition), transform 0.1s;
+  text-decoration: none;
+  line-height: 1;
+}
+
+.df-btn:active {
+  transform: scale(0.98);
+}
+
+.df-btn-primary {
+  width: 100%;
+  background: var(--df-primary);
+  color: #fff;
+}
+
+.df-btn-primary:hover {
+  background: var(--df-primary-dark);
+}
+
+.df-btn-secondary {
+  width: 100%;
+  background: var(--df-surface);
+  color: var(--df-text);
+  border: 1px solid var(--df-border);
+  margin-top: 12px;
+}
+
+.df-btn-secondary:hover {
+  background: var(--df-border);
+}
+
+.df-btn-ghost {
+  background: transparent;
+  color: var(--df-text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: underline;
+}
+
+.df-btn-ghost:hover {
+  color: var(--df-text);
+}
+
+.df-btn-back {
+  background: transparent;
+  color: var(--df-text-muted);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 14px 0;
+  border: none;
+}
+
+.df-btn-back:hover {
+  color: var(--df-text);
+}
+
+.df-btn-full {
+  width: 100%;
+  display: block;
+  margin-bottom: 10px;
+}
+
+/* ── Step action row (Back + Continue) ───────────────────────────────────── */
+.df-step-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 4px;
+}
+
+.df-step-actions .df-btn-back {
+  flex-shrink: 0;
+}
+
+.df-step-actions .df-btn-primary {
+  flex: 1;
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────────── */
+@media (max-width: 540px) {
+  .df-card {
+    padding: 28px 20px;
+  }
+
+  .df-preset-amounts {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .df-field-row {
+    grid-template-columns: 1fr;
+  }
+
+  .df-progress-label {
+    display: none;
+  }
+
+  .df-upsell__comparison {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .df-upsell__arrow {
+    transform: rotate(90deg);
+  }
+
+  .df-trust-bar {
+    gap: 10px;
+  }
 }
