@@ -4,6 +4,7 @@ import defaultConfig, { validateConfig } from './defaultConfig';
 import { pushEvent } from './analytics';
 import StepGivingSetup from './steps/StepGivingSetup';
 import StepPersonalInfo from './steps/StepPersonalInfo';
+import StepHonorMemory from './steps/StepHonorMemory';
 import StepMonthlyUpsell from './steps/StepMonthlyUpsell';
 import StepPayment from './steps/StepPayment';
 import StepReview from './steps/StepReview';
@@ -13,6 +14,7 @@ import StepConfirmation from './steps/StepConfirmation';
 export const STEPS = {
   GIVING_SETUP: 0,
   PERSONAL_INFO: 1,
+  HONOR_MEMORY: 2,
   MONTHLY_UPSELL: 3,
   PAYMENT: 4,
   REVIEW: 5,
@@ -20,15 +22,16 @@ export const STEPS = {
 };
 
 // Progress bar labels (excludes upsell and confirmation — they're not numbered)
-const PROGRESS_LABELS = ['Gift Details', 'Your Info', 'Payment', 'Review'];
+const PROGRESS_LABELS = ['Gift Details', 'Your Info', 'Dedication', 'Payment', 'Review'];
 
 // Maps each STEP to a 0-based progress index (-1 = not in progress bar)
 const STEP_TO_PROGRESS = {
   [STEPS.GIVING_SETUP]: 0,
   [STEPS.PERSONAL_INFO]: 1,
-  [STEPS.MONTHLY_UPSELL]: 2, // visually sits at "Payment"
-  [STEPS.PAYMENT]: 2,
-  [STEPS.REVIEW]: 3,
+  [STEPS.HONOR_MEMORY]: 2,
+  [STEPS.MONTHLY_UPSELL]: 3, // visually sits at "Payment"
+  [STEPS.PAYMENT]: 3,
+  [STEPS.REVIEW]: 4,
   [STEPS.CONFIRMATION]: -1,
 };
 
@@ -61,6 +64,13 @@ function DonationForm({ config: userConfig = {} }) {
     email: '',
     phone: '',
     // Step 3
+    dedicationType: null, // null | 'honor' | 'memory'
+    honoreeName: '',
+    honoreeRelationship: '',
+    notificationType: 'none', // 'none' | 'email' | 'mail'
+    notificationEmail: '',
+    notificationAddress: '',
+    // Step 4
     paymentMethod: 'card', // 'card' | 'paypal' | 'apple-pay' | 'google-pay' | 'ach'
     cardToken: null,
     achRouting: '',
@@ -85,7 +95,7 @@ function DonationForm({ config: userConfig = {} }) {
   // ── Step sequence ───────────────────────────────────────────────────────────
   // Built dynamically — upsell is injected only for one-time donors when enabled.
   function getStepSequence() {
-    const seq = [STEPS.GIVING_SETUP, STEPS.PERSONAL_INFO];
+    const seq = [STEPS.GIVING_SETUP, STEPS.PERSONAL_INFO, STEPS.HONOR_MEMORY];
     if (formData.frequency === 'one-time' && config.upsellEnabled) {
       seq.push(STEPS.MONTHLY_UPSELL);
     }
@@ -137,6 +147,7 @@ function DonationForm({ config: userConfig = {} }) {
     return (
       <div className={`df-wrapper df-layout-${config.layout}`}>
         <div className="df-card df-card--confirmation">
+          <div className="df-card__ambient" aria-hidden="true" />
           <StepConfirmation
             config={config}
             formData={formData}
@@ -151,6 +162,7 @@ function DonationForm({ config: userConfig = {} }) {
   return (
     <div className={`df-wrapper df-layout-${config.layout}`}>
       <div className="df-card">
+        <div className="df-card__ambient" aria-hidden="true" />
         {/* ── Progress indicator ────────────────────────────────────────── */}
         {progressIndex >= 0 && (
           <nav className="df-progress" aria-label="Form progress">
@@ -189,6 +201,17 @@ function DonationForm({ config: userConfig = {} }) {
 
         {step === STEPS.PERSONAL_INFO && (
           <StepPersonalInfo
+            config={config}
+            formData={formData}
+            updateFormData={updateFormData}
+            onNext={nextStep}
+            onBack={prevStep}
+            headingRef={headingRef}
+          />
+        )}
+
+        {step === STEPS.HONOR_MEMORY && (
+          <StepHonorMemory
             config={config}
             formData={formData}
             updateFormData={updateFormData}

@@ -7,12 +7,12 @@
 
 /* ── Custom Properties (theme tokens) ───────────────────────────────────── */
 :root {
-  --df-primary: #1a56a0;
-  --df-primary-dark: #144080;
-  --df-primary-light: #e8f0fb;
-  --df-monthly-accent: #e8a020;
-  --df-monthly-accent-light: #fef3dc;
-  --df-success: #16a34a;
+  --df-primary: #16a34a;
+  --df-primary-dark: #15803d;
+  --df-primary-light: #dcfce7;
+  --df-monthly-accent: #22c55e;
+  --df-monthly-accent-light: #f0fdf4;
+  --df-success: #15803d;
   --df-success-light: #dcfce7;
   --df-error: #dc2626;
   --df-error-light: #fee2e2;
@@ -983,4 +983,84 @@
   .df-trust-bar {
     gap: 10px;
   }
+}
+
+/* ── Ambient card animation ─────────────────────────────────────────────────
+   A barely-perceptible breathing effect that makes the card feel alive.
+   Two soft, blurred blobs drift slowly in opposite directions behind all
+   card content. Opacity is intentionally low — it should be felt, not seen.
+   ──────────────────────────────────────────────────────────────────────── */
+.df-card {
+  position: relative;
+  isolation: isolate;
+}
+
+.df-card__ambient {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--df-radius);
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Primary blob — top-left, drifts slowly clockwise */
+.df-card__ambient::before {
+  content: '';
+  position: absolute;
+  width: 320px;
+  height: 320px;
+  top: -120px;
+  left: -80px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at center,
+    rgba(22, 163, 74, 0.10) 0%,
+    transparent 65%
+  );
+  filter: blur(28px);
+  animation: df-blob-a 26s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* Secondary blob — bottom-right, drifts counter-clockwise */
+.df-card__ambient::after {
+  content: '';
+  position: absolute;
+  width: 240px;
+  height: 240px;
+  bottom: -80px;
+  right: -60px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at center,
+    rgba(34, 197, 94, 0.07) 0%,
+    transparent 65%
+  );
+  filter: blur(20px);
+  animation: df-blob-b 19s ease-in-out infinite;
+  animation-delay: -11s;
+  will-change: transform;
+}
+
+@keyframes df-blob-a {
+  0%   { transform: translate(0px,  0px)  scale(1.00); }
+  20%  { transform: translate(18px, 10px) scale(1.06); }
+  45%  { transform: translate(10px, 30px) scale(0.96); }
+  70%  { transform: translate(28px, 16px) scale(1.04); }
+  100% { transform: translate(0px,  0px)  scale(1.00); }
+}
+
+@keyframes df-blob-b {
+  0%   { transform: translate(0px,   0px)  scale(1.00); }
+  25%  { transform: translate(-14px, 10px) scale(1.08); }
+  55%  { transform: translate(-22px,-16px) scale(0.94); }
+  80%  { transform: translate(-8px,  12px) scale(1.03); }
+  100% { transform: translate(0px,   0px)  scale(1.00); }
+}
+
+/* Lift all card content above the ambient layer */
+.df-card > *:not(.df-card__ambient) {
+  position: relative;
+  z-index: 1;
 }

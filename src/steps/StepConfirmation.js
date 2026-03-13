@@ -63,6 +63,15 @@ export default function StepConfirmation({ config, formData, effectiveAmount, he
         </p>
       )}
 
+      {/* ── Honoree acknowledgment ───────────────────────────────────────── */}
+      {formData.dedicationType && formData.honoreeName && (
+        <p className="df-confirmation__honoree">
+          This gift is dedicated{' '}
+          {formData.dedicationType === 'honor' ? 'in honor of' : 'in memory of'}{' '}
+          <strong>{formData.honoreeName}</strong>.
+        </p>
+      )}
+
       {/* ── Optional next-step CTA ───────────────────────────────────────── */}
       {config.confirmationCTA && (
         <a
