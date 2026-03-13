@@ -56,6 +56,8 @@
   padding: 40px;
   width: 100%;
   max-width: 480px;
+  position: relative;
+  isolation: isolate;
 }
 
 .df-card--confirmation {
@@ -985,21 +987,54 @@
   }
 }
 
-/* ── Ambient card animation — breathing shadow ──────────────────────────────
-   The card's shadow pulses between a neutral resting state and a soft green
-   halo. No internal motion, no interference with content or contrast.
+/* ── Snake border animation ─────────────────────────────────────────────────
+   A vibrant green "snake" traces the perimeter of the card continuously.
+   Uses @property to animate a custom angle inside conic-gradient, then
+   masks the result to a thin border ring only — card interior stays clean.
    ──────────────────────────────────────────────────────────────────────── */
-.df-card {
-  animation: df-card-breathe 4s ease-in-out infinite alternate;
+@property --snake-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
 }
 
-@keyframes df-card-breathe {
-  from { box-shadow: 0 4px 32px rgba(0, 0, 0, 0.12); }
-  to   { box-shadow: 0 8px 48px rgba(0, 0, 0, 0.18), 0 0 40px rgba(255, 255, 255, 0.30); }
+.df-card::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: calc(var(--df-radius) + 3px);
+  background: conic-gradient(
+    from var(--snake-angle),
+    transparent      0%,
+    transparent     60%,
+    rgba(74, 222, 128, 0.25) 67%,
+    #4ade80         76%,
+    #a7f3d0         83%,
+    #ffffff         87%,
+    #a7f3d0         91%,
+    #4ade80         94%,
+    rgba(74, 222, 128, 0.10) 97%,
+    transparent    100%
+  );
+  /* Mask to border ring only — content-box is solid white, padded area is
+     also white; XOR composite punches out the center, leaving just the edge */
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  padding: 3px;
+  animation: df-snake 2.5s linear infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@keyframes df-snake {
+  to { --snake-angle: 360deg; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .df-card { animation: none; }
+  .df-card::before { animation: none; opacity: 0; }
 }
 
 /* ── Honor/Dedication skip affordance ───────────────────────────────────── */
