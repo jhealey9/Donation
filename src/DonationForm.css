@@ -994,8 +994,8 @@
 }
 
 @keyframes df-card-breathe {
-  from { box-shadow: 0 4px 32px rgba(0, 0, 0, 0.09); }
-  to   { box-shadow: 0 10px 52px rgba(22, 163, 74, 0.20), 0 4px 20px rgba(0, 0, 0, 0.06); }
+  from { box-shadow: 0 4px 32px rgba(0, 0, 0, 0.12); }
+  to   { box-shadow: 0 8px 48px rgba(0, 0, 0, 0.18), 0 0 40px rgba(255, 255, 255, 0.30); }
 }
 
 @media (prefers-reduced-motion: reduce) {
