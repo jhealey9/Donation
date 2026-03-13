@@ -37,6 +37,7 @@
       min-width: 0;
       border-radius: 20px;
       overflow: hidden;
+      position: relative;        /* overlay anchors to this */
       display: flex;
       flex-direction: column;    /* image on top, text section below */
       background-color: #1a3a2e;
@@ -104,30 +105,18 @@
 
     /* ── Zone 2: Text ────────────────────────────────────────────────────── */
     /*
-     * Fixed height so the content card never exceeds the form card height.
-     * overflow:hidden clips everything beyond 160px.
-     * When .is-expanded is added via JS, overflow-y:auto allows scrolling
-     * within the same fixed container — outer dimensions never change.
+     * Natural height — contains only eyebrow + headline + "Read more" button.
+     * Body copy lives exclusively in the slide-up overlay below.
+     *
+     * padding-bottom: 40px matches .df-card's padding so the "Read more"
+     * button bottom-aligns with the "Give Now" button in the form card.
      */
     .content-card__text {
       flex: none;
-      height: 160px;
-      overflow: hidden;
       background: #1a3a2e;
-      padding: 26px 44px 0;
+      padding: 24px 44px 40px;
       color: #fff;
-      position: relative;
     }
-
-    .content-card__text.is-expanded {
-      overflow-y: auto;
-      padding-bottom: 20px;
-    }
-
-    /* Thin scrollbar styled for the dark zone */
-    .content-card__text::-webkit-scrollbar       { width: 4px; }
-    .content-card__text::-webkit-scrollbar-track  { background: rgba(255,255,255,0.06); }
-    .content-card__text::-webkit-scrollbar-thumb  { background: rgba(255,255,255,0.28); border-radius: 2px; }
 
     /* Eyebrow — always one line */
     .content-card__eyebrow {
@@ -148,26 +137,13 @@
       font-weight: 800;
       line-height: 1.15;
       letter-spacing: -0.02em;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
-    /* Body — hidden until expanded */
-    .content-card__body {
-      display: none;
-      font-size: 14px;
-      line-height: 1.75;
-      color: rgba(255, 255, 255, 0.72);
-      margin-bottom: 14px;
-    }
-
-    .content-card__text.is-expanded .content-card__body {
-      display: block;
-    }
-
-    /* Read more / Read less toggle */
+    /* Read more button */
     .content-card__readmore {
       display: inline-flex;
       align-items: center;
@@ -181,8 +157,72 @@
       letter-spacing: 0.04em;
       color: #4ade80;
     }
-
     .content-card__readmore:hover { color: #86efac; }
+
+    /* ── Slide-up overlay ────────────────────────────────────────────────── */
+    /*
+     * Covers the full content card when "Read more" is clicked.
+     * Slides up from the bottom via translateY — outer card never resizes.
+     * Inner content scrolls independently within the overlay.
+     */
+    .content-card__overlay {
+      position: absolute;
+      inset: 0;
+      background: #1a3a2e;
+      display: flex;
+      flex-direction: column;
+      transform: translateY(100%);
+      transition: transform 0.36s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+    }
+
+    .content-card.is-expanded .content-card__overlay {
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    /* Scrollable reading area within the overlay */
+    .content-card__overlay-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 36px 44px 20px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.25) rgba(255,255,255,0.06);
+    }
+    .content-card__overlay-scroll::-webkit-scrollbar       { width: 4px; }
+    .content-card__overlay-scroll::-webkit-scrollbar-track  { background: rgba(255,255,255,0.06); }
+    .content-card__overlay-scroll::-webkit-scrollbar-thumb  { background: rgba(255,255,255,0.25); border-radius: 2px; }
+
+    .content-card__overlay-eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #4ade80;
+      margin-bottom: 12px;
+    }
+
+    .content-card__overlay-headline {
+      font-size: 22px;
+      font-weight: 800;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      color: #fff;
+      margin-bottom: 18px;
+    }
+
+    .content-card__body {
+      font-size: 14px;
+      line-height: 1.8;
+      color: rgba(255, 255, 255, 0.78);
+    }
+
+    /* "Read less" button anchored to the bottom of the overlay */
+    .content-card__overlay-footer {
+      flex: none;
+      padding: 16px 44px 40px;
+      background: #1a3a2e;
+    }
 
     /* ═══════════════════════════════════════════════════════════════════════
        FORM CARD
@@ -217,17 +257,21 @@
       }
       /* On mobile the image zone needs a fixed height since flex:1 has no
          parent height to expand into when the layout stacks vertically */
-      .content-card__image    { flex: none; height: 260px; }
-      .content-card__text     { padding: 22px 28px 0; height: 148px; }
-      .content-card__headline { font-size: 20px; }
-      .form-card              { flex: none; width: 100%; }
+      .content-card__image           { flex: none; height: 240px; }
+      .content-card__text            { padding: 20px 28px 32px; }
+      .content-card__headline        { font-size: 20px; }
+      .content-card__overlay-scroll  { padding: 28px 28px 16px; }
+      .content-card__overlay-footer  { padding: 12px 28px 32px; }
+      .form-card                     { flex: none; width: 100%; }
     }
 
     @media (max-width: 480px) {
       body { padding: 20px 12px 40px; }
-      .content-card__image    { height: 200px; }
-      .content-card__text     { padding: 20px 20px 0; height: 140px; }
-      .content-card__headline { font-size: 18px; }
+      .content-card__image           { height: 180px; }
+      .content-card__text            { padding: 18px 20px 28px; }
+      .content-card__headline        { font-size: 18px; }
+      .content-card__overlay-scroll  { padding: 24px 20px 12px; }
+      .content-card__overlay-footer  { padding: 10px 20px 28px; }
     }
   </style>
   <style>
@@ -266,19 +310,31 @@ CSSPLACEHOLDER
         <!-- Photo by Pexels · Free to use under the Pexels License -->
       </div>
 
-      <!-- Zone 2: Text (fixed height — edit copy here, no rebuild needed) -->
-      <div class="content-card__text" id="content-text">
+      <!-- Zone 2: Text — eyebrow + headline + Read more, bottom-aligned to Give Now -->
+      <div class="content-card__text">
         <p class="content-card__eyebrow">Emergency Response Fund</p>
         <h1 class="content-card__headline">When disaster strikes, your gift is the first response.</h1>
-        <p class="content-card__body">
-          Communities devastated by floods, earthquakes, and wildfires need help now.
-          Your donation reaches survivors within hours — providing shelter, clean water,
-          and a path forward when it matters most.
-        </p>
-        <button class="content-card__readmore" id="readmore-btn" onclick="toggleReadMore()">
-          <span id="readmore-label">Read more</span>
-          <span id="readmore-arrow">↓</span>
+        <button class="content-card__readmore" onclick="toggleReadMore()">
+          Read more ↓
         </button>
+      </div>
+
+      <!-- Slide-up overlay — full card height, slides up on "Read more" click -->
+      <div class="content-card__overlay" id="content-overlay" aria-hidden="true">
+        <div class="content-card__overlay-scroll" id="overlay-scroll">
+          <p class="content-card__overlay-eyebrow">Emergency Response Fund</p>
+          <h2 class="content-card__overlay-headline">When disaster strikes, your gift is the first response.</h2>
+          <p class="content-card__body">
+            Communities devastated by floods, earthquakes, and wildfires need help now.
+            Your donation reaches survivors within hours — providing shelter, clean water,
+            and a path forward when it matters most.
+          </p>
+        </div>
+        <div class="content-card__overlay-footer">
+          <button class="content-card__readmore" onclick="toggleReadMore()">
+            Read less ↑
+          </button>
+        </div>
       </div>
     </div>
 
@@ -292,13 +348,13 @@ CSSPLACEHOLDER
   </div>
   <script>
     function toggleReadMore() {
-      var zone  = document.getElementById('content-text');
-      var label = document.getElementById('readmore-label');
-      var arrow = document.getElementById('readmore-arrow');
-      var open  = zone.classList.toggle('is-expanded');
-      label.textContent = open ? 'Read less' : 'Read more';
-      arrow.textContent = open ? '↑' : '↓';
-      if (!open) { zone.scrollTop = 0; }
+      var card    = document.querySelector('.content-card');
+      var overlay = document.getElementById('content-overlay');
+      var open    = card.classList.toggle('is-expanded');
+      overlay.setAttribute('aria-hidden', String(!open));
+      if (!open) {
+        document.getElementById('overlay-scroll').scrollTop = 0;
+      }
     }
   </script>
   <script>
