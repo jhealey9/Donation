@@ -64,18 +64,23 @@
      */
     .content-card__image {
       flex: 1;                   /* grows to fill card height above text */
-      min-height: 220px;         /* floor so image zone never collapses */
+      min-height: 200px;         /* floor so image zone never collapses */
       position: relative;
       overflow: hidden;
-      background-color: #162e20; /* subtle contrast behind placeholder */
+      background-color: #162e20;
     }
 
+    /* Absolutely positioned so the image fills its zone without contributing
+       any intrinsic height to the layout. The form card drives overall height;
+       the image paints into whatever space the flex algorithm allocates. */
     .content-card__img {
+      position: absolute;
+      inset: 0;
       width: 100%;
       height: 100%;
       display: block;
       object-fit: cover;
-      object-position: center top; /* override per-image with inline style */
+      object-position: center center; /* override per-image with inline style */
     }
 
     /* Placeholder shown when no <img> is present */
