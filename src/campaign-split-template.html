@@ -104,39 +104,85 @@
 
     /* ── Zone 2: Text ────────────────────────────────────────────────────── */
     /*
-     * Solid background — completely independent from the image above.
-     * Edit the eyebrow, headline, and body directly in the HTML below.
-     * No rebuild needed; these are plain HTML strings.
+     * Fixed height so the content card never exceeds the form card height.
+     * overflow:hidden clips everything beyond 160px.
+     * When .is-expanded is added via JS, overflow-y:auto allows scrolling
+     * within the same fixed container — outer dimensions never change.
      */
     .content-card__text {
-      flex: none;                /* natural height, never stretches */
+      flex: none;
+      height: 160px;
+      overflow: hidden;
       background: #1a3a2e;
-      padding: 36px 48px 48px;
+      padding: 26px 44px 0;
       color: #fff;
+      position: relative;
     }
 
+    .content-card__text.is-expanded {
+      overflow-y: auto;
+      padding-bottom: 20px;
+    }
+
+    /* Thin scrollbar styled for the dark zone */
+    .content-card__text::-webkit-scrollbar       { width: 4px; }
+    .content-card__text::-webkit-scrollbar-track  { background: rgba(255,255,255,0.06); }
+    .content-card__text::-webkit-scrollbar-thumb  { background: rgba(255,255,255,0.28); border-radius: 2px; }
+
+    /* Eyebrow — always one line */
     .content-card__eyebrow {
       font-size: 11px;
       font-weight: 700;
       letter-spacing: 0.14em;
       text-transform: uppercase;
       color: #4ade80;
+      margin-bottom: 10px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Headline — always one line */
+    .content-card__headline {
+      font-size: 22px;
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Body — hidden until expanded */
+    .content-card__body {
+      display: none;
+      font-size: 14px;
+      line-height: 1.75;
+      color: rgba(255, 255, 255, 0.72);
       margin-bottom: 14px;
     }
 
-    .content-card__headline {
-      font-size: 36px;
-      font-weight: 800;
-      line-height: 1.08;
-      letter-spacing: -0.025em;
-      margin-bottom: 16px;
+    .content-card__text.is-expanded .content-card__body {
+      display: block;
     }
 
-    .content-card__body {
-      font-size: 15px;
-      line-height: 1.75;
-      color: rgba(255, 255, 255, 0.72);
+    /* Read more / Read less toggle */
+    .content-card__readmore {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: #4ade80;
     }
+
+    .content-card__readmore:hover { color: #86efac; }
 
     /* ═══════════════════════════════════════════════════════════════════════
        FORM CARD
@@ -171,17 +217,17 @@
       }
       /* On mobile the image zone needs a fixed height since flex:1 has no
          parent height to expand into when the layout stacks vertically */
-      .content-card__image { flex: none; height: 280px; }
-      .content-card__text  { padding: 28px 32px 36px; }
-      .content-card__headline { font-size: 28px; }
-      .form-card { flex: none; width: 100%; }
+      .content-card__image    { flex: none; height: 260px; }
+      .content-card__text     { padding: 22px 28px 0; height: 148px; }
+      .content-card__headline { font-size: 20px; }
+      .form-card              { flex: none; width: 100%; }
     }
 
     @media (max-width: 480px) {
       body { padding: 20px 12px 40px; }
-      .content-card__image { height: 220px; }
-      .content-card__text  { padding: 24px 24px 32px; }
-      .content-card__headline { font-size: 24px; }
+      .content-card__image    { height: 200px; }
+      .content-card__text     { padding: 20px 20px 0; height: 140px; }
+      .content-card__headline { font-size: 18px; }
     }
   </style>
   <style>
@@ -220,15 +266,19 @@ CSSPLACEHOLDER
         <!-- Photo by Pexels · Free to use under the Pexels License -->
       </div>
 
-      <!-- Zone 2: Text -->
-      <div class="content-card__text">
+      <!-- Zone 2: Text (fixed height — edit copy here, no rebuild needed) -->
+      <div class="content-card__text" id="content-text">
         <p class="content-card__eyebrow">Emergency Response Fund</p>
-        <h1 class="content-card__headline">When disaster strikes,<br>your gift is the<br>first response.</h1>
+        <h1 class="content-card__headline">When disaster strikes, your gift is the first response.</h1>
         <p class="content-card__body">
           Communities devastated by floods, earthquakes, and wildfires need help now.
           Your donation reaches survivors within hours — providing shelter, clean water,
           and a path forward when it matters most.
         </p>
+        <button class="content-card__readmore" id="readmore-btn" onclick="toggleReadMore()">
+          <span id="readmore-label">Read more</span>
+          <span id="readmore-arrow">↓</span>
+        </button>
       </div>
     </div>
 
@@ -240,6 +290,17 @@ CSSPLACEHOLDER
     </div>
 
   </div>
+  <script>
+    function toggleReadMore() {
+      var zone  = document.getElementById('content-text');
+      var label = document.getElementById('readmore-label');
+      var arrow = document.getElementById('readmore-arrow');
+      var open  = zone.classList.toggle('is-expanded');
+      label.textContent = open ? 'Read less' : 'Read more';
+      arrow.textContent = open ? '↑' : '↓';
+      if (!open) { zone.scrollTop = 0; }
+    }
+  </script>
   <script>
 JSPLACEHOLDER
   </script>
