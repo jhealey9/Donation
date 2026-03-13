@@ -9,7 +9,7 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #0d1f16;
+      background: #ffffff;
       min-height: 100vh;
       display: flex;
       align-items: flex-start;
@@ -20,7 +20,7 @@
     /* ── Page layout — two independent floating cards ────────────────────── */
     .layout {
       display: flex;
-      align-items: flex-start;   /* each card at its own natural height */
+      align-items: stretch;      /* both cards grow to match the taller sibling */
       gap: 24px;
       width: 100%;
       max-width: 1120px;
@@ -51,7 +51,6 @@
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
-      min-height: 600px;
       background-color: #1a3a2e;   /* replace with background-image */
     }
 
@@ -157,7 +156,7 @@
         flex-direction: column;
         gap: 20px;
       }
-      .content-card { min-height: 360px; }
+      .content-card { min-height: 320px; }
       .content-card__text { padding: 0 32px 40px; }
       .content-card__headline { font-size: 30px; }
       .content-card__body { max-width: 100%; }
