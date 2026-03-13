@@ -139,9 +139,18 @@ export default function StepHonorMemory({
           ← Back
         </button>
         <button type="button" className="df-btn df-btn-primary" onClick={onNext}>
-          {dedicationType ? 'Continue' : 'Skip this step'}
+          Continue
         </button>
       </div>
+
+      {/* Skip preserves entered data — user can return and find fields intact */}
+      <button
+        type="button"
+        className="df-btn df-btn-ghost df-btn-full df-honor-skip"
+        onClick={onNext}
+      >
+        Skip this step
+      </button>
     </section>
   );
 }
