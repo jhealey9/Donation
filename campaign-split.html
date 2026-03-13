@@ -28,59 +28,66 @@
 
     /* ═══════════════════════════════════════════════════════════════════════
        CONTENT CARD
-       Left component — hero image + eyebrow / headline / body copy.
-       Wider than the form to give the image and copy room to breathe.
+       Two clearly separated zones stacked vertically:
+         1. Image zone  — fills remaining card height, never shows text on top
+         2. Text zone   — solid background, always legible over any image
        ═══════════════════════════════════════════════════════════════════════ */
-
-    /*
-     * TO USE A REAL PHOTO:
-     *   Add  background-image: url('your-photo.jpg');
-     *        background-size: cover;
-     *        background-position: center top;
-     *   to .content-card below, then delete the .content-card__placeholder div.
-     *
-     * Subject placement tip: keep the focal point in the upper-center so it
-     * stays fully visible above the text gradient at the bottom.
-     */
     .content-card {
-      flex: 1;                   /* grows to fill space left by fixed-width form */
+      flex: 1;
       min-width: 0;
       border-radius: 20px;
       overflow: hidden;
-      position: relative;
       display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      background-color: #1a3a2e;   /* replace with background-image */
+      flex-direction: column;    /* image on top, text section below */
+      background-color: #1a3a2e;
     }
 
-    /* Gradient — keeps top of image clean, darkens bottom for legibility */
-    .content-card::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(
-        to bottom,
-        rgba(10, 40, 28, 0.05)  0%,
-        rgba(10, 40, 28, 0.08) 42%,
-        rgba(10, 40, 28, 0.72) 65%,
-        rgba(10, 40, 28, 0.96) 100%
-      );
-      z-index: 1;
-      pointer-events: none;
+    /* ── Zone 1: Image ───────────────────────────────────────────────────── */
+    /*
+     * The image zone expands to fill all vertical space left after the text
+     * section takes its natural height. The <img> inside uses object-fit:cover
+     * so any photo fills the zone without letterboxing.
+     *
+     * TO USE A REAL PHOTO:
+     *   Replace the placeholder <div> inside .content-card__image with:
+     *     <img src="your-photo.jpg"
+     *          alt="Descriptive alt text"
+     *          class="content-card__img" />
+     *
+     * TO CONTROL FOCAL POINT:
+     *   Add  object-position: 30% top;  (or any x% y value) to the <img>.
+     *   This keeps the subject in frame without cropping their face.
+     *   Examples:
+     *     object-position: center top    ← subject centered, head visible
+     *     object-position: 20% center   ← subject on the left
+     *     object-position: right top    ← subject on the right
+     */
+    .content-card__image {
+      flex: 1;                   /* grows to fill card height above text */
+      min-height: 220px;         /* floor so image zone never collapses */
+      position: relative;
+      overflow: hidden;
+      background-color: #162e20; /* subtle contrast behind placeholder */
     }
 
-    /* Photo placeholder — remove once background-image is set */
-    .content-card__placeholder {
+    .content-card__img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+      object-position: center top; /* override per-image with inline style */
+    }
+
+    /* Placeholder shown when no <img> is present */
+    .content-card__img-placeholder {
       position: absolute;
       inset: 0;
-      z-index: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       gap: 12px;
-      color: rgba(255, 255, 255, 0.15);
+      color: rgba(255, 255, 255, 0.18);
       font-size: 12px;
       font-weight: 500;
       letter-spacing: 0.07em;
@@ -90,11 +97,16 @@
       user-select: none;
     }
 
-    /* Text anchored to the bottom of the card */
+    /* ── Zone 2: Text ────────────────────────────────────────────────────── */
+    /*
+     * Solid background — completely independent from the image above.
+     * Edit the eyebrow, headline, and body directly in the HTML below.
+     * No rebuild needed; these are plain HTML strings.
+     */
     .content-card__text {
-      position: relative;
-      z-index: 2;
-      padding: 0 48px 56px;
+      flex: none;                /* natural height, never stretches */
+      background: #1a3a2e;
+      padding: 36px 48px 48px;
       color: #fff;
     }
 
@@ -104,30 +116,27 @@
       letter-spacing: 0.14em;
       text-transform: uppercase;
       color: #4ade80;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
 
     .content-card__headline {
-      font-size: 40px;
+      font-size: 36px;
       font-weight: 800;
-      line-height: 1.07;
+      line-height: 1.08;
       letter-spacing: -0.025em;
-      margin-bottom: 20px;
-      text-shadow: 0 2px 20px rgba(0, 0, 0, 0.40);
+      margin-bottom: 16px;
     }
 
     .content-card__body {
       font-size: 15px;
       line-height: 1.75;
       color: rgba(255, 255, 255, 0.72);
-      max-width: 380px;
     }
 
     /* ═══════════════════════════════════════════════════════════════════════
        FORM CARD
-       Right component — the React donation form rendered as a self-contained
-       white card. The snake border animation from DonationForm.css is fully
-       visible here. Width is fixed so the form never feels cramped.
+       Right component — the React donation form as a self-contained white
+       card. The snake border animation renders naturally here.
        ═══════════════════════════════════════════════════════════════════════ */
     .form-card {
       flex: 0 0 476px;
@@ -142,8 +151,7 @@
       align-items: flex-start !important;
     }
 
-    /* Let df-card be its own fully independent card.
-       Width fills the .form-card column; snake and shadow render naturally. */
+    /* Let df-card render as its own fully independent card */
     .form-card .df-card {
       width: 100% !important;
       max-width: 100% !important;
@@ -156,20 +164,19 @@
         flex-direction: column;
         gap: 20px;
       }
-      .content-card { min-height: 320px; }
-      .content-card__text { padding: 0 32px 40px; }
-      .content-card__headline { font-size: 30px; }
-      .content-card__body { max-width: 100%; }
-      .form-card {
-        flex: none;
-        width: 100%;
-      }
+      /* On mobile the image zone needs a fixed height since flex:1 has no
+         parent height to expand into when the layout stacks vertically */
+      .content-card__image { flex: none; height: 280px; }
+      .content-card__text  { padding: 28px 32px 36px; }
+      .content-card__headline { font-size: 28px; }
+      .form-card { flex: none; width: 100%; }
     }
 
     @media (max-width: 480px) {
       body { padding: 20px 12px 40px; }
-      .content-card__text { padding: 0 24px 32px; }
-      .content-card__headline { font-size: 26px; }
+      .content-card__image { height: 220px; }
+      .content-card__text  { padding: 24px 24px 32px; }
+      .content-card__headline { font-size: 24px; }
     }
   </style>
   <style>
@@ -182,24 +189,46 @@ body{margin:0}:root{--df-primary:#16a34a;--df-primary-dark:#15803d;--df-primary-
 
     <!-- ═══════════════════════════════════════════════════════════════════
          CONTENT CARD
-         Set background-image on .content-card to use a real photo.
-         Edit eyebrow / headline / body as plain HTML — no rebuild needed.
+
+         ZONE 1 — IMAGE
+         Replace the placeholder div with an <img> tag:
+           <img src="your-photo.jpg"
+                alt="Alt text"
+                class="content-card__img"
+                style="object-position: center top" />
+
+         Adjust object-position to keep your subject in frame.
+
+         ZONE 2 — TEXT
+         Edit eyebrow / headline / body directly below.
+         No rebuild required — these are plain HTML strings.
          ═══════════════════════════════════════════════════════════════════ -->
     <div class="content-card">
 
-      <!-- Delete this once you have a real background-image -->
-      <div class="content-card__placeholder" aria-hidden="true">
-        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
-          <rect x="3" y="3" width="18" height="18" rx="2"/>
-          <circle cx="8.5" cy="8.5" r="1.5"/>
-          <polyline points="21 15 16 10 5 21"/>
-        </svg>
-        Hero photo here<br>
-        <small style="font-size:11px;opacity:.6;text-transform:none;letter-spacing:0">
-          Set background-image on .content-card
-        </small>
+      <!-- Zone 1: Image -->
+      <div class="content-card__image">
+        <!--
+          Swap this placeholder for a real <img> when you have a photo:
+          <img src="your-photo.jpg"
+               alt="Disaster relief volunteers distributing supplies"
+               class="content-card__img"
+               style="object-position: center top" />
+        -->
+        <div class="content-card__img-placeholder" aria-hidden="true">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+          </svg>
+          Hero photo here<br>
+          <small style="font-size:11px;opacity:.55;text-transform:none;letter-spacing:0">
+            Replace with &lt;img class="content-card__img"&gt;<br>
+            Use object-position to set focal point
+          </small>
+        </div>
       </div>
 
+      <!-- Zone 2: Text -->
       <div class="content-card__text">
         <p class="content-card__eyebrow">Emergency Response Fund</p>
         <h1 class="content-card__headline">When disaster strikes,<br>your gift is the<br>first response.</h1>
@@ -213,8 +242,6 @@ body{margin:0}:root{--df-primary:#16a34a;--df-primary-dark:#15803d;--df-primary-
 
     <!-- ═══════════════════════════════════════════════════════════════════
          FORM CARD
-         The React donation form renders here as a self-contained white card
-         with the animated snake border.
          ═══════════════════════════════════════════════════════════════════ -->
     <div class="form-card">
       <div id="root"></div>
