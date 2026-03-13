@@ -35,7 +35,7 @@
     .content-card {
       flex: 1;
       min-width: 0;
-      border-radius: 10px;
+      border-radius: calc(var(--df-radius, 10px) + 3px); /* matches snake border outer edge */
       overflow: hidden;
       position: relative;        /* overlay anchors to this */
       display: flex;
