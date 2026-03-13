@@ -71,13 +71,6 @@ export default function StepReview({
           value={donorDisplay}
           onEdit={() => onEdit(STEPS.PERSONAL_INFO)}
         />
-        {formData.dedicationType && formData.honoreeName && (
-          <ReviewRow
-            label={formData.dedicationType === 'honor' ? 'In Honor Of' : 'In Memory Of'}
-            value={formData.honoreeName}
-            onEdit={() => onEdit(STEPS.HONOR_MEMORY)}
-          />
-        )}
         <ReviewRow
           label="Payment"
           value={PAYMENT_LABELS[formData.paymentMethod] || formData.paymentMethod}

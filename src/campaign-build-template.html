@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bring Clean Water to Every Person on the Planet</title>
+  <style>
+    /* ── Reset ──────────────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ── Hero ───────────────────────────────────────────────────────────────── */
+    /*
+     * TO USE A REAL PHOTO:
+     *   1. Add: background-image: url('your-hero-photo.jpg');
+     *   2. Add: background-size: cover; background-position: right center;
+     *   3. Remove the .hero__photo-placeholder element.
+     *
+     * Photo composition tip: frame your subject on the RIGHT ~45% of the image
+     * so they're not obscured by the form. Use background-position: 65% center
+     * to nudge the subject further into view.
+     */
+    .hero {
+      min-height: 100vh;
+      position: relative;
+      display: flex;
+      align-items: stretch;
+      background-color: #0c8fa0;
+    }
+
+    /* Gradient overlay — darkens left side so text/form remain legible over any photo */
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to right,
+        rgba(4, 65, 78, 0.92)  0%,
+        rgba(6, 95, 110, 0.82) 35%,
+        rgba(6, 95, 110, 0.40) 55%,
+        rgba(6, 95, 110, 0.00) 72%
+      );
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* ── Left content column ──────────────────────────────────────────────── */
+    .hero__content {
+      position: relative;
+      z-index: 2;
+      padding: 72px 56px 72px 64px;
+      width: 52%;
+      max-width: 620px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 32px;
+    }
+
+    /* ── Headline ─────────────────────────────────────────────────────────── */
+    .hero__headline {
+      color: #ffffff;
+      font-size: 54px;
+      font-weight: 800;
+      line-height: 1.07;
+      letter-spacing: -0.025em;
+      text-shadow: 0 2px 20px rgba(0, 0, 0, 0.22);
+    }
+
+    /* ── Right side — photo space ─────────────────────────────────────────── */
+    .hero__photo-placeholder {
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 52%;
+      z-index: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: rgba(255, 255, 255, 0.18);
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-align: center;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .hero__photo-placeholder svg {
+      opacity: 0.15;
+    }
+
+    /* ── Override form's standalone-page wrapper so it fits in the hero ───── */
+    .hero__content .df-wrapper {
+      min-height: unset;
+      padding: 0;
+      background: transparent;
+      justify-content: flex-start;
+      align-items: flex-start;
+    }
+
+    .hero__content .df-card {
+      width: 100%;
+      max-width: 440px;
+      box-shadow: 0 20px 64px rgba(0, 0, 0, 0.32);
+    }
+
+    /* ── Campaign colour theme (yellow accent, matching reference) ────────── */
+    /*    CSS custom properties cascade to children, so these override the    */
+    /*    form's :root defaults for everything inside .hero__content.         */
+    .hero__content {
+      --df-primary:              #c49200;
+      --df-primary-dark:         #9a7000;
+      --df-primary-light:        #fef8e0;
+      --df-monthly-accent:       #f5c518;
+      --df-monthly-accent-light: #fffbe8;
+    }
+
+    /* The CTA button and active states need the bright yellow, not the dark */
+    .hero__content .df-btn-primary               { background: #f5c518; color: #1a1200; }
+    .hero__content .df-btn-primary:hover          { background: #d4a800; }
+    .hero__content .df-toggle-monthly.active      { background: #f5c518; color: #1a1200; }
+    .hero__content .df-amount-btn.active          { border-color: #f5c518; background: #fef8e0; color: #7a5c00; }
+    .hero__content .df-impact-line                { background: #fef8e0; border-left-color: #f5c518; }
+    .hero__content .df-progress-step.active .df-progress-dot  { background: #f5c518; border-color: #f5c518; color: #1a1200; }
+    .hero__content .df-progress-step.active .df-progress-label { color: #c49200; }
+    .hero__content .df-progress-step.completed .df-progress-dot { border-color: #c49200; color: #c49200; }
+    .hero__content .df-payment-tab.active         { border-color: #c49200; background: #fef8e0; color: #7a5c00; }
+
+    /* ── Responsive ────────────────────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .hero__content  { width: 65%; padding: 56px 40px; }
+      .hero__headline { font-size: 42px; }
+    }
+
+    @media (max-width: 640px) {
+      .hero {
+        flex-direction: column;
+        background-position: center top;
+      }
+      .hero::before {
+        background: linear-gradient(
+          to bottom,
+          rgba(4, 65, 78, 0.95) 0%,
+          rgba(4, 65, 78, 0.80) 60%,
+          rgba(4, 65, 78, 0.40) 100%
+        );
+      }
+      .hero__content {
+        width: 100%;
+        max-width: 100%;
+        padding: 40px 20px 48px;
+        gap: 24px;
+      }
+      .hero__headline           { font-size: 32px; }
+      .hero__content .df-card   { max-width: 100%; }
+      .hero__photo-placeholder  { display: none; }
+    }
+  </style>
+  <style>
+CSSPLACEHOLDER
+  </style>
+  <!-- Campaign overrides come AFTER built CSS to win the cascade -->
+  <style>
+    .hero__content .df-wrapper   { min-height: unset !important; padding: 0 !important; background: transparent !important; }
+    .hero__content .df-card      { max-width: 440px !important; }
+    .hero__content .df-btn-primary              { background: #f5c518 !important; color: #1a1200 !important; }
+    .hero__content .df-btn-primary:hover         { background: #d4a800 !important; }
+    .hero__content .df-toggle-monthly.active     { background: #f5c518 !important; color: #1a1200 !important; }
+    .hero__content .df-amount-btn.active         { border-color: #f5c518 !important; background: #fef8e0 !important; color: #7a5c00 !important; }
+  </style>
+</head>
+<body>
+  <div class="hero">
+
+    <!-- Left column: headline + form -->
+    <div class="hero__content">
+      <h1 class="hero__headline">Bring clean water<br>to every person<br>on the planet</h1>
+      <div id="root"></div>
+    </div>
+
+    <!-- Right column: your hero photo goes here -->
+    <div class="hero__photo-placeholder" aria-hidden="true">
+      <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <circle cx="8.5" cy="8.5" r="1.5"/>
+        <polyline points="21 15 16 10 5 21"/>
+      </svg>
+      Hero photo here<br>
+      <small style="font-size:11px; opacity:0.7; text-transform:none; letter-spacing:0">
+        Subject should face left,<br>positioned on the right half
+      </small>
+    </div>
+
+  </div>
+  <script>
+JSPLACEHOLDER
+  </script>
+</body>
+</html>
