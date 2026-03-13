@@ -147,7 +147,6 @@ function DonationForm({ config: userConfig = {} }) {
     return (
       <div className={`df-wrapper df-layout-${config.layout}`}>
         <div className="df-card df-card--confirmation">
-          <div className="df-card__ambient" aria-hidden="true" />
           <StepConfirmation
             config={config}
             formData={formData}
@@ -162,7 +161,6 @@ function DonationForm({ config: userConfig = {} }) {
   return (
     <div className={`df-wrapper df-layout-${config.layout}`}>
       <div className="df-card">
-        <div className="df-card__ambient" aria-hidden="true" />
         {/* ── Progress indicator ────────────────────────────────────────── */}
         {progressIndex >= 0 && (
           <nav className="df-progress" aria-label="Form progress">

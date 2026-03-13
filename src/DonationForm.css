@@ -985,81 +985,21 @@
   }
 }
 
-/* ── Ambient card animation ─────────────────────────────────────────────────
-   A barely-perceptible breathing effect that makes the card feel alive.
-   Two soft, blurred blobs drift slowly in opposite directions behind all
-   card content. Opacity is intentionally low — it should be felt, not seen.
+/* ── Ambient card animation — breathing shadow ──────────────────────────────
+   The card's shadow pulses between a neutral resting state and a soft green
+   halo. No internal motion, no interference with content or contrast.
    ──────────────────────────────────────────────────────────────────────── */
 .df-card {
-  position: relative;
-  isolation: isolate;
+  animation: df-card-breathe 4s ease-in-out infinite alternate;
 }
 
-.df-card__ambient {
-  position: absolute;
-  inset: 0;
-  border-radius: var(--df-radius);
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 0;
+@keyframes df-card-breathe {
+  from { box-shadow: 0 4px 32px rgba(0, 0, 0, 0.09); }
+  to   { box-shadow: 0 10px 52px rgba(22, 163, 74, 0.20), 0 4px 20px rgba(0, 0, 0, 0.06); }
 }
 
-/* Primary blob — top-left, drifts slowly clockwise */
-/* Sky blue: clearly distinct from green UI components, no contrast conflicts */
-.df-card__ambient::before {
-  content: '';
-  position: absolute;
-  width: 340px;
-  height: 340px;
-  top: -110px;
-  left: -70px;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle at center,
-    rgba(56, 189, 248, 0.28) 0%,
-    rgba(56, 189, 248, 0.10) 40%,
-    transparent 65%
-  );
-  filter: blur(18px);
-  animation: df-blob-a 26s ease-in-out infinite;
-  will-change: transform;
-}
-
-/* Secondary blob — bottom-right, drifts counter-clockwise */
-.df-card__ambient::after {
-  content: '';
-  position: absolute;
-  width: 260px;
-  height: 260px;
-  bottom: -70px;
-  right: -50px;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle at center,
-    rgba(14, 165, 233, 0.22) 0%,
-    rgba(14, 165, 233, 0.07) 45%,
-    transparent 65%
-  );
-  filter: blur(14px);
-  animation: df-blob-b 19s ease-in-out infinite;
-  animation-delay: -11s;
-  will-change: transform;
-}
-
-@keyframes df-blob-a {
-  0%   { transform: translate(0px,  0px)  scale(1.00); opacity: 0.75; }
-  20%  { transform: translate(18px, 10px) scale(1.07); opacity: 1.00; }
-  45%  { transform: translate(10px, 32px) scale(0.95); opacity: 0.80; }
-  70%  { transform: translate(30px, 16px) scale(1.05); opacity: 0.95; }
-  100% { transform: translate(0px,  0px)  scale(1.00); opacity: 0.75; }
-}
-
-@keyframes df-blob-b {
-  0%   { transform: translate(0px,   0px)  scale(1.00); opacity: 0.70; }
-  25%  { transform: translate(-16px, 12px) scale(1.09); opacity: 1.00; }
-  55%  { transform: translate(-24px,-18px) scale(0.93); opacity: 0.75; }
-  80%  { transform: translate(-8px,  14px) scale(1.04); opacity: 0.90; }
-  100% { transform: translate(0px,   0px)  scale(1.00); opacity: 0.70; }
+@media (prefers-reduced-motion: reduce) {
+  .df-card { animation: none; }
 }
 
 /* ── Honor/Dedication skip affordance ───────────────────────────────────── */
@@ -1075,10 +1015,4 @@
 .df-honor-skip:hover {
   opacity: 1;
   color: var(--df-text-muted);
-}
-
-/* Lift all card content above the ambient layer */
-.df-card > *:not(.df-card__ambient) {
-  position: relative;
-  z-index: 1;
 }
